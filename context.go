@@ -18,7 +18,10 @@
 
 package nagopher
 
-import "github.com/chonla/format"
+import (
+	"github.com/chonla/format"
+	"strconv"
+)
 
 type Context interface {
 	Name() string
@@ -59,7 +62,7 @@ func (c *BaseContext) Name() string {
 func (c *BaseContext) Describe(metric Metric) string {
 	data := map[string]interface{}{
 		"name":       metric.Name(),
-		"value":      metric.Value(),
+		"value":      strconv.FormatFloat(metric.Value(), 'f', -1, strconv.IntSize),
 		"unit":       metric.Unit(),
 		"value_unit": metric.ValueUnit(),
 	}
