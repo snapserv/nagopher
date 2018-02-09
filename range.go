@@ -40,6 +40,9 @@ func NewRange(invert bool, start float64, end float64) *Range {
 }
 
 func ParseRange(specifier string) *Range {
+	var start float64 = math.NaN()
+	var end float64 = math.NaN()
+
 	// Invert match if specifier starts with '@' character
 	invert := strings.HasPrefix(specifier, "@")
 	if invert {
@@ -48,8 +51,23 @@ func ParseRange(specifier string) *Range {
 
 	// Split specifier by colon
 	parts := strings.Split(specifier, ":")
-	start := parseRangePart(parts[0])
-	end := parseRangePart(parts[1])
+	if len(parts) == 1 {
+		end = parseRangePart(parts[0])
+	} else if len(parts) == 2 {
+		start = parseRangePart(parts[0])
+		end = parseRangePart(parts[1])
+	} else {
+		// TODO: Proper error handling without panicking
+		panic("Invalid amount of colons...")
+	}
+
+	// Handle missing values by setting them to default values
+	if math.IsNaN(start) {
+		start = 0
+	}
+	if math.IsNaN(end) {
+		end = math.Inf(1)
+	}
 
 	// Return new 'Range' instance with parsed values
 	return NewRange(invert, start, end)
@@ -57,13 +75,13 @@ func ParseRange(specifier string) *Range {
 
 func parseRangePart(part string) float64 {
 	if part == "" {
-		return math.Inf(1)
+		return math.NaN()
 	} else if part == "~" {
 		return math.Inf(-1)
 	} else {
 		value, err := strconv.ParseFloat(part, strconv.IntSize)
 		if err != nil {
-			// TODO: Proper error handling
+			// TODO: Proper error handling without panicking
 			panic(fmt.Sprintf("Could not parse part of range specifier: %s (%s)", part, err.Error()))
 		}
 
@@ -72,7 +90,20 @@ func parseRangePart(part string) float64 {
 }
 
 func (r *Range) String() string {
-	return r.Start() + ":" + r.End()
+	invertPrefix := ""
+	start, end := r.Start(), r.End()
+
+	if r.invert {
+		invertPrefix = "@"
+	}
+
+	if start == "" && end == "" {
+		return ""
+	} else if start == "" && end != "" {
+		return invertPrefix + end
+	} else {
+		return invertPrefix + start + ":" + end
+	}
 }
 
 func (r *Range) Match(value float64) bool {
@@ -84,12 +115,15 @@ func (r *Range) Match(value float64) bool {
 }
 
 func (r *Range) Start() string {
-	if math.IsInf(r.start, -1) {
+	if r.start == 0 {
+		// Zero is automatically being assumed if not given
+		return ""
+	} else if math.IsInf(r.start, -1) {
 		return "~"
 	} else if math.IsInf(r.start, 1) {
 		return ""
 	} else {
-		return fmt.Sprintf("%g", r.start)
+		return strconv.FormatFloat(r.start, 'f', -1, strconv.IntSize)
 	}
 }
 
@@ -99,7 +133,7 @@ func (r *Range) End() string {
 	} else if math.IsInf(r.end, 1) {
 		return ""
 	} else {
-		return fmt.Sprintf("%g", r.end)
+		return strconv.FormatFloat(r.end, 'f', -1, strconv.IntSize)
 	}
 }
 
