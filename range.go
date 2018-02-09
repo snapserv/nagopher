@@ -52,32 +52,33 @@ func ParseRange(specifier string) *Range {
 	// Split specifier by colon
 	parts := strings.Split(specifier, ":")
 	if len(parts) == 1 {
-		end = parseRangePart(parts[0])
+		start = parseRangePart("", true)
+		end = parseRangePart(parts[0], false)
 	} else if len(parts) == 2 {
-		start = parseRangePart(parts[0])
-		end = parseRangePart(parts[1])
+		start = parseRangePart(parts[0], true)
+		end = parseRangePart(parts[1], false)
 	} else {
 		// TODO: Proper error handling without panicking
 		panic("Invalid amount of colons...")
-	}
-
-	// Handle missing values by setting them to default values
-	if math.IsNaN(start) {
-		start = 0
-	}
-	if math.IsNaN(end) {
-		end = math.Inf(1)
 	}
 
 	// Return new 'Range' instance with parsed values
 	return NewRange(invert, start, end)
 }
 
-func parseRangePart(part string) float64 {
+func parseRangePart(part string, isStart bool) float64 {
 	if part == "" {
-		return math.NaN()
+		if isStart {
+			return 0
+		} else {
+			return math.Inf(1)
+		}
 	} else if part == "~" {
-		return math.Inf(-1)
+		if isStart {
+			return math.Inf(-1)
+		} else {
+			panic("Negative infinity used for end")
+		}
 	} else {
 		value, err := strconv.ParseFloat(part, strconv.IntSize)
 		if err != nil {
@@ -138,5 +139,16 @@ func (r *Range) End() string {
 }
 
 func (r *Range) ViolationHint() string {
-	return fmt.Sprintf("outside range %s", r.String())
+	start, end := r.Start(), r.End()
+	if start == "" {
+		start = "0"
+	}
+	if start == "~" {
+		start = "-inf"
+	}
+	if end == "" {
+		end = "inf"
+	}
+
+	return fmt.Sprintf("outside range %s:%s", start, end)
 }
