@@ -51,20 +51,33 @@ func (pd *PerfData) String() string {
 
 	if pd.warningRange != nil {
 		output = append(output, pd.warningRange.String())
+	} else {
+		output = append(output, "")
 	}
+
 	if pd.criticalRange != nil {
 		output = append(output, pd.criticalRange.String())
+	} else {
+		output = append(output, "")
 	}
+
 	if valueRange := pd.metric.ValueRange(); valueRange != nil {
 		if start := valueRange.Start(); start != "" {
 			output = append(output, start)
+		} else {
+			output = append(output, "")
 		}
+
 		if end := valueRange.End(); end != "" {
 			output = append(output, end)
+		} else {
+			output = append(output, "")
 		}
+	} else {
+		output = append(output, "", "")
 	}
 
-	return strings.Join(output, ";")
+	return strings.TrimRight(strings.Join(output, ";"), ";")
 }
 
 func (pd *PerfData) quoteString(value string) string {
