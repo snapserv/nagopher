@@ -45,6 +45,10 @@ func (s *Summary) Verbose(resultCollection *ResultCollection) []string {
 	var messages []string
 
 	for _, result := range resultCollection.Get() {
+		if result.State() == StateOk {
+			continue
+		}
+
 		messages = append(messages, fmt.Sprintf("%s: %s", result.State().Description, result))
 	}
 
