@@ -23,6 +23,11 @@ import (
 	"testing"
 )
 
+func TestBaseContext_Name(t *testing.T) {
+	context := NewContext("ctx", "")
+	assert.Equal(t, "ctx", context.Name())
+}
+
 func TestBaseContext_Describe_Empty(t *testing.T) {
 	context := NewContext("ctx", "")
 	metric := NewMetric("metric", 0, "", nil, "")
@@ -35,6 +40,25 @@ func TestBaseContext_Describe_Format(t *testing.T) {
 	metric := NewMetric("metric", 42, "s", nil, "")
 
 	assert.Equal(t, "name=metric value=42 unit=s value_unit=42s", context.Describe(metric))
+}
+
+func TestBaseContext_Evaluate(t *testing.T) {
+	context := NewContext("ctx", "")
+	context.SetResultFactory(NewResultFactory())
+
+	metric := NewMetric("metric", 42, "", nil, "")
+	resource := NewResource()
+	expected := NewResult(StateOk, metric, context, resource, "")
+
+	assert.Equal(t, expected, context.Evaluate(metric, resource))
+}
+
+func TestBaseContext_Performance(t *testing.T) {
+	context := NewContext("ctx", "")
+	metric := NewMetric("metric", 42, "", nil, "")
+	resource := NewResource()
+
+	assert.Nil(t, context.Performance(metric, resource))
 }
 
 func TestScalarContext_Evaluate(t *testing.T) {
@@ -58,4 +82,21 @@ func TestScalarContext_Evaluate(t *testing.T) {
 
 		assert.Equal(t, expected, context.Evaluate(metric, nil))
 	}
+}
+
+func TestScalarContext_Performance(t *testing.T) {
+	warningRange := ParseRange("0:2")
+	criticalRange := ParseRange("0:4")
+	context := NewScalarContext("ctx", warningRange, criticalRange)
+
+	metric := NewMetric("metric", 42, "", nil, "")
+	resource := NewResource()
+
+	expected := &PerfData{
+		metric:        metric,
+		warningRange:  warningRange,
+		criticalRange: criticalRange,
+	}
+
+	assert.Equal(t, expected, context.Performance(metric, resource))
 }
