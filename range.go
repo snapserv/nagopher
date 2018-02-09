@@ -121,17 +121,13 @@ func (r *Range) Start() string {
 		return ""
 	} else if math.IsInf(r.start, -1) {
 		return "~"
-	} else if math.IsInf(r.start, 1) {
-		return ""
 	} else {
 		return strconv.FormatFloat(r.start, 'f', -1, strconv.IntSize)
 	}
 }
 
 func (r *Range) End() string {
-	if math.IsInf(r.end, -1) {
-		return "~"
-	} else if math.IsInf(r.end, 1) {
+	if math.IsInf(r.end, 1) {
 		return ""
 	} else {
 		return strconv.FormatFloat(r.end, 'f', -1, strconv.IntSize)
