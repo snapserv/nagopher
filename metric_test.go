@@ -23,22 +23,27 @@ import (
 	"testing"
 )
 
-func TestMetric_ValueUnit_Float(t *testing.T) {
+func TestBaseMetric_ValueUnit_Float(t *testing.T) {
 	metric := NewMetric("time", 3.141, "s", nil, "")
 	assert.Equal(t, "3.141s", metric.ValueUnit())
 }
 
-func TestMetric_ValueUnit_Integer(t *testing.T) {
+func TestBaseMetric_ValueUnit_Integer(t *testing.T) {
 	metric := NewMetric("count", 42, "", nil, "")
 	assert.Equal(t, "42", metric.ValueUnit())
 }
 
-func TestMetric_ValueUnit_LargeInteger(t *testing.T) {
+func TestBaseMetric_ValueUnit_LargeInteger(t *testing.T) {
 	metric := NewMetric("grains", 4200000000, "", nil, "")
 	assert.Equal(t, "4200000000", metric.ValueUnit())
 }
 
-func TestMetric_ValueUnit_LargeFloat(t *testing.T) {
+func TestBaseMetric_ValueUnit_LargeFloat(t *testing.T) {
 	metric := NewMetric("grains", 420000.42, "", nil, "")
 	assert.Equal(t, "420000.42", metric.ValueUnit())
+}
+
+func TestBaseMetric_ContextName(t *testing.T) {
+	metric := NewMetric("metric", 42, "", nil, "context")
+	assert.Equal(t, "context", metric.ContextName())
 }

@@ -27,21 +27,21 @@ type Summarizer interface {
 	Empty() string
 }
 
-type Summary struct{}
+type BaseSummary struct{}
 
-func NewSummary() *Summary {
-	return &Summary{}
+func NewBaseSummary() *BaseSummary {
+	return &BaseSummary{}
 }
 
-func (s *Summary) Ok(resultCollection *ResultCollection) string {
+func (s *BaseSummary) Ok(resultCollection *ResultCollection) string {
 	return resultCollection.Get()[0].String()
 }
 
-func (s *Summary) Problem(resultCollection *ResultCollection) string {
+func (s *BaseSummary) Problem(resultCollection *ResultCollection) string {
 	return resultCollection.Get()[0].String()
 }
 
-func (s *Summary) Verbose(resultCollection *ResultCollection) []string {
+func (s *BaseSummary) Verbose(resultCollection *ResultCollection) []string {
 	var messages []string
 
 	for _, result := range resultCollection.Get() {
@@ -55,6 +55,6 @@ func (s *Summary) Verbose(resultCollection *ResultCollection) []string {
 	return messages
 }
 
-func (s *Summary) Empty() string {
+func (s *BaseSummary) Empty() string {
 	return "No check results"
 }

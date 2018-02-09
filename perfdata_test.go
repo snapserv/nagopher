@@ -47,22 +47,22 @@ func TestPerfData_String_ValueUnit(t *testing.T) {
 }
 
 func TestPerfData_String_ValueRange(t *testing.T) {
-	valueRange := NewRange(false, 0, 100)
+	valueRange := ParseRange("0:100")
 	perfData := NewPerfData("i", 42, "", valueRange, nil, nil)
 
 	assert.Equal(t, "i=42;;;;100", perfData.String())
 }
 
 func TestPerfData_String_WarningRange(t *testing.T) {
-	warningRange := NewRange(false, 0, 100)
+	warningRange := ParseRange("-100:")
 	perfData := NewPerfData("i", 42, "", nil, warningRange, nil)
 
-	assert.Equal(t, "i=42;100", perfData.String())
+	assert.Equal(t, "i=42;-100:", perfData.String())
 }
 
 func TestPerfData_String_CriticalRange(t *testing.T) {
-	criticalRange := NewRange(false, 0, 100)
+	criticalRange := ParseRange("@-100:0")
 	perfData := NewPerfData("i", 42, "", nil, nil, criticalRange)
 
-	assert.Equal(t, "i=42;;100", perfData.String())
+	assert.Equal(t, "i=42;;@-100:0", perfData.String())
 }
