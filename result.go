@@ -94,8 +94,12 @@ func NewResultFactory() ResultFactory {
 }
 
 func (r *BaseResult) String() string {
-	description := r.context.Describe(r.metric)
-	if description == "" {
+	var description string
+
+	if r.context != nil {
+		description = r.context.Describe(r.metric)
+	}
+	if description == "" && r.metric != nil {
 		description = r.metric.String()
 	}
 
