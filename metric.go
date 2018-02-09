@@ -18,7 +18,10 @@
 
 package nagopher
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 type Metric interface {
 	fmt.Stringer
@@ -77,7 +80,9 @@ func (m *BaseMetric) ValueUnit() string {
 	if m.IsIntegral() {
 		return fmt.Sprintf("%d%s", int64(m.value), m.valueUnit)
 	} else {
-		return fmt.Sprintf("%.4g%s", m.value, m.valueUnit)
+		return fmt.Sprintf("%s%s",
+			strconv.FormatFloat(m.value, 'f', -1, strconv.IntSize),
+			m.valueUnit)
 	}
 }
 
