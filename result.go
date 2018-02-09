@@ -52,14 +52,11 @@ func (rc *ResultCollection) Count() int {
 }
 
 func (rc *ResultCollection) MostSignificantState() State {
-	mostSignificantState := StateOk
-	for _, result := range rc.results {
-		if result.State().ExitCode > mostSignificantState.ExitCode {
-			mostSignificantState = result.State()
-		}
+	if len(rc.results) >= 1 {
+		return rc.results[0].State()
+	} else {
+		return StateUnknown
 	}
-
-	return mostSignificantState
 }
 
 func (rc *ResultCollection) sort() {
