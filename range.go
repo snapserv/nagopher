@@ -19,6 +19,7 @@
 package nagopher
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -39,7 +40,8 @@ func NewRange(invert bool, start float64, end float64) *Range {
 	}
 }
 
-func ParseRange(specifier string) *Range {
+func ParseRange(specifier string) (error, *Range) {
+	var err error
 	var start float64 = math.NaN()
 	var end float64 = math.NaN()
 
@@ -52,41 +54,48 @@ func ParseRange(specifier string) *Range {
 	// Split specifier by colon
 	parts := strings.Split(specifier, ":")
 	if len(parts) == 1 {
-		start = parseRangePart("", true)
-		end = parseRangePart(parts[0], false)
+		if err, start = parseRangePart("", true); err != nil {
+			return err, nil
+		}
+		if err, end = parseRangePart(parts[0], false); err != nil {
+			return err, nil
+		}
 	} else if len(parts) == 2 {
-		start = parseRangePart(parts[0], true)
-		end = parseRangePart(parts[1], false)
+		if err, start = parseRangePart(parts[0], true); err != nil {
+			return err, nil
+		}
+		if err, end = parseRangePart(parts[1], false); err != nil {
+			return err, nil
+		}
 	} else {
-		// TODO: Proper error handling without panicking
-		panic("Invalid amount of colons...")
+		return errors.New("nagopher: range specifier contains more than one colon"), nil
 	}
 
 	// Return new 'Range' instance with parsed values
-	return NewRange(invert, start, end)
+	return nil, NewRange(invert, start, end)
 }
 
-func parseRangePart(part string, isStart bool) float64 {
+func parseRangePart(part string, isStart bool) (error, float64) {
 	if part == "" {
 		if isStart {
-			return 0
+			return nil, 0
 		} else {
-			return math.Inf(1)
+			return nil, math.Inf(1)
 		}
 	} else if part == "~" {
 		if isStart {
-			return math.Inf(-1)
+			return nil, math.Inf(-1)
 		} else {
-			panic("Negative infinity used for end")
+			return errors.New("nagopher: can not use negative infinity in range as 'end'"), -1
 		}
 	} else {
 		value, err := strconv.ParseFloat(part, strconv.IntSize)
 		if err != nil {
-			// TODO: Proper error handling without panicking
-			panic(fmt.Sprintf("Could not parse part of range specifier: %s (%s)", part, err.Error()))
+			return errors.New(fmt.Sprintf("nagopher: could not parse range part [%s] as float (%s)",
+				part, err.Error())), -1
 		}
 
-		return value
+		return nil, value
 	}
 }
 

@@ -18,16 +18,39 @@
 
 package nagopher
 
-type Resource interface {
-	Probe(warnings *warningCollection) (error, []Metric)
+type Warning interface {
+	Warning() string
 }
 
-type BaseResource struct{}
-
-func NewResource() *BaseResource {
-	return &BaseResource{}
+type warningString struct {
+	s string
 }
 
-func (r *BaseResource) Probe(warnings *warningCollection) (error, []Metric) {
-	return nil, []Metric{}
+type warningCollection struct {
+	warnings []Warning
+}
+
+func NewWarning(text string) Warning {
+	return &warningString{text}
+}
+
+func (w *warningString) Warning() string {
+	return w.s
+}
+
+func newWarningCollection() *warningCollection {
+	return &warningCollection{}
+}
+
+func (c *warningCollection) Add(warnings ...Warning) {
+	c.warnings = append(c.warnings, warnings...)
+}
+
+func (c *warningCollection) GetStrings() []string {
+	var results []string
+	for _, warning := range c.warnings {
+		results = append(results, warning.Warning())
+	}
+
+	return results
 }

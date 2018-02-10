@@ -24,43 +24,27 @@ import (
 	"testing"
 )
 
-type MockResource struct {
+type TestRuntimeMockResource struct {
 	*BaseResource
 }
 
-func NewMockResource() *MockResource {
-	return &MockResource{
+func NewTestRuntimeMockResource() *TestRuntimeMockResource {
+	return &TestRuntimeMockResource{
 		BaseResource: NewResource(),
 	}
 }
 
-func (r *MockResource) Probe() []Metric {
-	return []Metric{
+func (r *TestRuntimeMockResource) Probe(warnings *warningCollection) (error, []Metric) {
+	return nil, []Metric{
 		NewMetric("usage1", 49.4, "%", nil, "usage"),
 		NewMetric("usage2", 92.6, "%", nil, "usage"),
-		NewMetric("usage3", 83.1, "%", nil, "usage"),
+		NewMetric("usage3", 83.1, "|", nil, "usage"),
 	}
 }
 
 func TestRuntime_Execute_NonVerbose(t *testing.T) {
 	check := NewCheck("usage", NewBaseSummary())
-	check.AttachResources(NewMockResource())
-	check.AttachContexts(
-		NewScalarContext("usage", nil, nil),
-	)
-
-	expected := CheckResult{
-		ExitCode: 0,
-		Output:   "USAGE OK - usage1 is 49.4% | usage1=49.4% usage2=92.6% usage3=83.1%",
-	}
-
-	result := NewRuntime(false).Execute(check)
-	assert.Equal(t, expected, result)
-}
-
-func TestRuntime_Execute_Verbose(t *testing.T) {
-	check := NewCheck("usage", NewBaseSummary())
-	check.AttachResources(NewMockResource())
+	check.AttachResources(NewTestRuntimeMockResource())
 	check.AttachContexts(
 		NewScalarContext("usage", nil, nil),
 	)
@@ -68,11 +52,35 @@ func TestRuntime_Execute_Verbose(t *testing.T) {
 	expected := CheckResult{
 		ExitCode: 0,
 		Output: strings.Join([]string{
-			"USAGE OK - usage1 is 49.4%",
-			" | usage1=49.4%",
-			"usage2=92.6%",
-			"usage3=83.1%",
-		}, "\n"),
+			"USAGE OK - usage1 is 49.4% | usage1=49.4% usage2=92.6% usage3=83.1",
+			"nagopher: stripped illegal character from string [usage1=49.4% usage2=92.6% usage3=83.1]",
+		}, "\n") + "\n",
+	}
+
+	result := NewRuntime(false).Execute(check)
+	assert.Equal(t, expected, result)
+}
+
+func TestRuntime_Execute_Verbose(t *testing.T) {
+	err, warningRange := ParseRange("10:80")
+	assert.Nil(t, err)
+
+	check := NewCheck("usage", NewBaseSummary())
+	check.AttachResources(NewTestRuntimeMockResource())
+	check.AttachContexts(
+		NewScalarContext("usage", warningRange, nil),
+	)
+
+	expected := CheckResult{
+		ExitCode: 1,
+		Output: strings.Join([]string{
+			"USAGE WARNING - usage2 is 92.6% (outside range 10:80)" +
+				" | usage1=49.4%;10:80 usage2=92.6%;10:80 usage3=83.1;10:80",
+			"warning: usage2 is 92.6% (outside range 10:80)",
+			"warning: usage3 is 83.1 (outside range 10:80)",
+			"nagopher: stripped illegal character from string [usage1=49.4%;10:80 usage2=92.6%;10:80 usage3=83.1;10:80]",
+			"nagopher: stripped illegal character from string [warning: usage3 is 83.1 (outside range 10:80)]",
+		}, "\n") + "\n",
 	}
 
 	result := NewRuntime(true).Execute(check)

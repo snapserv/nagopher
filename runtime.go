@@ -43,11 +43,17 @@ func NewRuntime(verbose bool) *Runtime {
 }
 
 func (o *Runtime) Execute(check *Check) CheckResult {
-	check.Run()
+	warnings := newWarningCollection()
+	check.Run(warnings)
+
+	err, checkOutput := o.buildCheckOutput(warnings, check)
+	if err != nil {
+		panic(fmt.Sprintf("nagopher: unexpected runtime error [%s]", err.Error()))
+	}
 
 	return CheckResult{
 		ExitCode: check.GetState().ExitCode,
-		Output:   o.buildCheckOutput(check),
+		Output:   checkOutput,
 	}
 }
 
@@ -57,25 +63,31 @@ func (o *Runtime) ExecuteAndExit(check *Check) {
 	os.Exit(result.ExitCode)
 }
 
-func (o *Runtime) buildCheckOutput(check *Check) string {
-	var perfData string
+func (o *Runtime) buildCheckOutput(warnings *warningCollection, check *Check) (error, string) {
+	output := o.buildCheckStatusOutput(warnings, check)
 
-	output := o.buildCheckStatusOutput(check)
-	if o.verbose {
-		output += "\n" + strings.Join(o.filterStrings(check.GetVerboseSummary()), "\n")
-		perfData = o.buildCheckPerfDataOutput(check.GetPerfData(), "\n")
-	} else {
-		perfData = o.buildCheckPerfDataOutput(check.GetPerfData(), " ")
-	}
-
-	if perfData != "" {
+	if err, perfData := o.buildCheckPerfDataOutput(warnings, check.GetPerfData(), " "); err == nil {
 		output += " | " + perfData
+	} else {
+		return err, ""
+	}
+	output += "\n"
+
+	if o.verbose {
+		lines := o.filterStrings(warnings, check.GetVerboseSummary())
+		if len(lines) > 0 {
+			output += strings.Join(lines, "\n") + "\n"
+		}
 	}
 
-	return output
+	if warningStrings := warnings.GetStrings(); len(warningStrings) > 0 {
+		output += strings.Join(o.filterStrings(nil, warningStrings), "\n") + "\n"
+	}
+
+	return nil, output
 }
 
-func (o *Runtime) buildCheckStatusOutput(check *Check) string {
+func (o *Runtime) buildCheckStatusOutput(warnings *warningCollection, check *Check) string {
 	var output []string
 
 	if check.name != "" {
@@ -86,32 +98,39 @@ func (o *Runtime) buildCheckStatusOutput(check *Check) string {
 		output = append(output, "-", summary)
 	}
 
-	return o.filterString(strings.Join(output, " "))
+	return o.filterString(warnings, strings.Join(output, " "))
 }
 
-func (o *Runtime) buildCheckPerfDataOutput(perfData []*PerfData, separator string) string {
+func (o *Runtime) buildCheckPerfDataOutput(warnings *warningCollection, perfData []*PerfData, separator string) (error, string) {
 	perfDataStrings := make([]string, len(perfData))
 	for key, value := range perfData {
-		perfDataStrings[key] = value.String()
+		if err, output := value.BuildOutput(); err == nil {
+			perfDataStrings[key] = output
+		} else {
+			return err, ""
+		}
 	}
 
-	return o.filterString(strings.Join(perfDataStrings, separator))
+	return nil, o.filterString(warnings, strings.Join(perfDataStrings, separator))
 }
 
-func (o *Runtime) filterString(value string) string {
+func (o *Runtime) filterString(warnings *warningCollection, value string) string {
+	originalValue := value
 	for _, character := range illegalCharacters {
 		value = strings.Replace(value, character, "", -1)
+		if originalValue != value && warnings != nil {
+			warnings.Add(NewWarning(fmt.Sprintf("nagopher: stripped illegal character from string [%s]",
+				originalValue)))
+		}
 	}
-
-	// TODO: Print warning for filtered characters
 
 	return value
 }
 
-func (o *Runtime) filterStrings(values []string) []string {
+func (o *Runtime) filterStrings(warnings *warningCollection, values []string) []string {
 	results := make([]string, len(values))
 	for key, value := range values {
-		results[key] = o.filterString(value)
+		results[key] = o.filterString(warnings, value)
 	}
 
 	return results

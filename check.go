@@ -18,7 +18,12 @@
 
 package nagopher
 
-import "sort"
+import (
+	"errors"
+	"fmt"
+	"reflect"
+	"sort"
+)
 
 type Check struct {
 	name       string
@@ -38,14 +43,18 @@ func NewCheck(name string, summarizer Summarizer) *Check {
 	}
 }
 
-func (c *Check) Run() {
+func (c *Check) Run(warnings *warningCollection) error {
 	for _, resource := range c.resources {
-		c.evaluateResource(resource)
+		if err := c.evaluateResource(warnings, resource); err != nil {
+			c.results.Add(NewResult(StateUnknown, nil, nil, resource, err.Error()))
+		}
 	}
 
 	sort.Slice(c.perfData, func(i int, j int) bool {
 		return c.perfData[i].metric.Name() < c.perfData[j].metric.Name()
 	})
+
+	return nil
 }
 
 func (c *Check) AttachResources(resources ...Resource) {
@@ -82,23 +91,29 @@ func (c *Check) GetPerfData() []*PerfData {
 	return c.perfData
 }
 
-func (c *Check) evaluateResource(resource Resource) {
-	metrics := resource.Probe()
+func (c *Check) evaluateResource(warnings *warningCollection, resource Resource) error {
+	err, metrics := resource.Probe(warnings)
+	if err != nil {
+		return err
+	}
 	if len(metrics) == 0 {
-		// TODO: Implement warning when resource does not return any metrics
+		return errors.New(fmt.Sprintf("nagopher: resource [%s] did not return any metrics",
+			reflect.TypeOf(resource)))
 	}
 
 	for _, metric := range metrics {
 		context, ok := c.contexts[metric.ContextName()]
 		if !ok {
-			panic("WHOOPS! Missing context :(")
+			return errors.New(fmt.Sprintf("nagopher: missing context with name [%s]", metric.ContextName()))
 		}
 
 		result := context.Evaluate(metric, resource)
-		c.results.Add(result)
-
 		if perfData := context.Performance(metric, resource); perfData != nil {
 			c.perfData = append(c.perfData, perfData)
 		}
+
+		c.results.Add(result)
 	}
+
+	return nil
 }

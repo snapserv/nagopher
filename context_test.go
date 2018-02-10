@@ -62,8 +62,10 @@ func TestBaseContext_Performance(t *testing.T) {
 }
 
 func TestScalarContext_Evaluate(t *testing.T) {
-	warningRange := ParseRange("0:2")
-	criticalRange := ParseRange("0:4")
+	err, warningRange := ParseRange("0:2")
+	assert.Nil(t, err)
+	err, criticalRange := ParseRange("0:4")
+	assert.Nil(t, err)
 	context := NewScalarContext("ctx", warningRange, criticalRange)
 
 	tests := map[string]struct {
@@ -85,8 +87,10 @@ func TestScalarContext_Evaluate(t *testing.T) {
 }
 
 func TestScalarContext_Performance(t *testing.T) {
-	warningRange := ParseRange("0:2")
-	criticalRange := ParseRange("0:4")
+	err, warningRange := ParseRange("0:2")
+	assert.Nil(t, err)
+	err, criticalRange := ParseRange("0:4")
+	assert.Nil(t, err)
 	context := NewScalarContext("ctx", warningRange, criticalRange)
 
 	metric := NewMetric("metric", 42, "", nil, "")

@@ -19,6 +19,7 @@
 package nagopher
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -30,22 +31,27 @@ type PerfData struct {
 	criticalRange *Range
 }
 
-func NewPerfData(name string, value float64, valueUnit string, valueRange *Range, warningRange *Range, criticalRange *Range) *PerfData {
+func NewPerfData(name string, value float64, valueUnit string, valueRange *Range, warningRange *Range, criticalRange *Range) (error, *PerfData) {
 	if strings.ContainsAny(name, "'=") {
-		// TODO: Illegal characters, abort here
+		return errors.New(fmt.Sprintf("nagopher: perfdata name [%s] contains invalid characters", name)), nil
 	}
 
-	return &PerfData{
+	return nil, &PerfData{
 		metric:        NewMetric(name, value, valueUnit, valueRange, "perfdata"),
 		warningRange:  warningRange,
 		criticalRange: criticalRange,
 	}
 }
 
-func (pd *PerfData) String() string {
+func (pd *PerfData) BuildOutput() (error, string) {
+	err, quotedName := pd.quoteString(pd.metric.Name())
+	if err != nil {
+		return err, ""
+	}
+
 	output := []string{fmt.Sprintf(
 		"%s=%s",
-		pd.quoteString(pd.metric.Name()),
+		quotedName,
 		pd.metric.ValueUnit(),
 	)}
 
@@ -77,18 +83,18 @@ func (pd *PerfData) String() string {
 		output = append(output, "", "")
 	}
 
-	return strings.TrimRight(strings.Join(output, ";"), ";")
+	return nil, strings.TrimRight(strings.Join(output, ";"), ";")
 }
 
-func (pd *PerfData) quoteString(value string) string {
+func (pd *PerfData) quoteString(value string) (error, string) {
 	match, err := regexp.MatchString("^\\w+$", value)
 	if err != nil {
-		panic("Unexpected runtime error: " + err.Error())
+		return errors.New(fmt.Sprintf("nagopher: unexpected regexp error (%s)", err.Error())), ""
 	}
 
 	if match {
-		return value
+		return nil, value
 	} else {
-		return fmt.Sprintf("'%s'", value)
+		return nil, fmt.Sprintf("'%s'", value)
 	}
 }
