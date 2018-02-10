@@ -34,7 +34,7 @@ func NewTestRuntimeMockResource() *TestRuntimeMockResource {
 	}
 }
 
-func (r *TestRuntimeMockResource) Probe(warnings *warningCollection) (error, []Metric) {
+func (r *TestRuntimeMockResource) Probe(warnings *WarningCollection) (error, []Metric) {
 	return nil, []Metric{
 		NewMetric("usage1", 49.4, "%", nil, "usage"),
 		NewMetric("usage2", 92.6, "%", nil, "usage"),

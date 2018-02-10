@@ -26,7 +26,7 @@ type warningString struct {
 	s string
 }
 
-type warningCollection struct {
+type WarningCollection struct {
 	warnings []Warning
 }
 
@@ -38,15 +38,15 @@ func (w *warningString) Warning() string {
 	return w.s
 }
 
-func newWarningCollection() *warningCollection {
-	return &warningCollection{}
+func NewWarningCollection() *WarningCollection {
+	return &WarningCollection{}
 }
 
-func (c *warningCollection) Add(warnings ...Warning) {
+func (c *WarningCollection) Add(warnings ...Warning) {
 	c.warnings = append(c.warnings, warnings...)
 }
 
-func (c *warningCollection) GetStrings() []string {
+func (c *WarningCollection) GetStrings() []string {
 	var results []string
 	for _, warning := range c.warnings {
 		results = append(results, warning.Warning())

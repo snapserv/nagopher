@@ -43,7 +43,7 @@ func NewCheck(name string, summarizer Summarizer) *Check {
 	}
 }
 
-func (c *Check) Run(warnings *warningCollection) error {
+func (c *Check) Run(warnings *WarningCollection) error {
 	for _, resource := range c.resources {
 		if err := c.evaluateResource(warnings, resource); err != nil {
 			c.results.Add(NewResult(StateUnknown, nil, nil, resource, err.Error()))
@@ -91,7 +91,7 @@ func (c *Check) GetPerfData() []*PerfData {
 	return c.perfData
 }
 
-func (c *Check) evaluateResource(warnings *warningCollection, resource Resource) error {
+func (c *Check) evaluateResource(warnings *WarningCollection, resource Resource) error {
 	err, metrics := resource.Probe(warnings)
 	if err != nil {
 		return err

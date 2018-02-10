@@ -19,7 +19,7 @@
 package nagopher
 
 type Resource interface {
-	Probe(warnings *warningCollection) (error, []Metric)
+	Probe(warnings *WarningCollection) (error, []Metric)
 }
 
 type BaseResource struct{}
@@ -28,6 +28,6 @@ func NewResource() *BaseResource {
 	return &BaseResource{}
 }
 
-func (r *BaseResource) Probe(warnings *warningCollection) (error, []Metric) {
+func (r *BaseResource) Probe(warnings *WarningCollection) (error, []Metric) {
 	return nil, []Metric{}
 }

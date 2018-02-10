@@ -43,7 +43,7 @@ func NewRuntime(verbose bool) *Runtime {
 }
 
 func (o *Runtime) Execute(check *Check) CheckResult {
-	warnings := newWarningCollection()
+	warnings := NewWarningCollection()
 	check.Run(warnings)
 
 	err, checkOutput := o.buildCheckOutput(warnings, check)
@@ -63,7 +63,7 @@ func (o *Runtime) ExecuteAndExit(check *Check) {
 	os.Exit(result.ExitCode)
 }
 
-func (o *Runtime) buildCheckOutput(warnings *warningCollection, check *Check) (error, string) {
+func (o *Runtime) buildCheckOutput(warnings *WarningCollection, check *Check) (error, string) {
 	output := o.buildCheckStatusOutput(warnings, check)
 
 	if err, perfData := o.buildCheckPerfDataOutput(warnings, check.GetPerfData(), " "); err == nil {
@@ -87,7 +87,7 @@ func (o *Runtime) buildCheckOutput(warnings *warningCollection, check *Check) (e
 	return nil, output
 }
 
-func (o *Runtime) buildCheckStatusOutput(warnings *warningCollection, check *Check) string {
+func (o *Runtime) buildCheckStatusOutput(warnings *WarningCollection, check *Check) string {
 	var output []string
 
 	if check.name != "" {
@@ -101,7 +101,7 @@ func (o *Runtime) buildCheckStatusOutput(warnings *warningCollection, check *Che
 	return o.filterString(warnings, strings.Join(output, " "))
 }
 
-func (o *Runtime) buildCheckPerfDataOutput(warnings *warningCollection, perfData []*PerfData, separator string) (error, string) {
+func (o *Runtime) buildCheckPerfDataOutput(warnings *WarningCollection, perfData []*PerfData, separator string) (error, string) {
 	perfDataStrings := make([]string, len(perfData))
 	for key, value := range perfData {
 		if err, output := value.BuildOutput(); err == nil {
@@ -114,7 +114,7 @@ func (o *Runtime) buildCheckPerfDataOutput(warnings *warningCollection, perfData
 	return nil, o.filterString(warnings, strings.Join(perfDataStrings, separator))
 }
 
-func (o *Runtime) filterString(warnings *warningCollection, value string) string {
+func (o *Runtime) filterString(warnings *WarningCollection, value string) string {
 	originalValue := value
 	for _, character := range illegalCharacters {
 		value = strings.Replace(value, character, "", -1)
@@ -127,7 +127,7 @@ func (o *Runtime) filterString(warnings *warningCollection, value string) string
 	return value
 }
 
-func (o *Runtime) filterStrings(warnings *warningCollection, values []string) []string {
+func (o *Runtime) filterStrings(warnings *WarningCollection, values []string) []string {
 	results := make([]string, len(values))
 	for key, value := range values {
 		results[key] = o.filterString(warnings, value)
