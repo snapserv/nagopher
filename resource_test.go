@@ -36,9 +36,9 @@ func NewTestBaseResourceMockResourceWarnings(warnings []Warning) *TestBaseResour
 	}
 }
 
-func (r *TestBaseResourceMockResourceWarnings) Probe(warnings *WarningCollection) (error, []Metric) {
+func (r *TestBaseResourceMockResourceWarnings) Probe(warnings *WarningCollection) ([]Metric, error) {
 	warnings.Add(r.warnings...)
-	return nil, []Metric{}
+	return []Metric{}, nil
 }
 
 type TestBaseResourceMockResourceError struct {
@@ -51,14 +51,14 @@ func NewTestBaseResourceMockResourceError() *TestBaseResourceMockResourceError {
 	}
 }
 
-func (r *TestBaseResourceMockResourceError) Probe(warnings *WarningCollection) (error, []Metric) {
-	return errors.New("nagopher-test: probing has failed"), []Metric{}
+func (r *TestBaseResourceMockResourceError) Probe(warnings *WarningCollection) ([]Metric, error) {
+	return []Metric{}, errors.New("nagopher-test: probing has failed")
 }
 
 func TestBaseResource_Probe_NoMetrics(t *testing.T) {
 	warnings := NewWarningCollection()
 	resource := NewResource()
-	err, metrics := resource.Probe(warnings)
+	metrics, err := resource.Probe(warnings)
 
 	assert.Nil(t, err)
 	assert.Equal(t, []Metric{}, metrics)
@@ -72,7 +72,7 @@ func TestBaseResource_Probe_Warnings(t *testing.T) {
 	}
 
 	resource := NewTestBaseResourceMockResourceWarnings(warnings)
-	err, metrics := resource.Probe(warningCollection)
+	metrics, err := resource.Probe(warningCollection)
 
 	assert.Nil(t, err)
 	assert.Equal(t, []Metric{}, metrics)
@@ -84,7 +84,7 @@ func TestBaseResource_Probe_Warnings(t *testing.T) {
 func TestBaseResource_Probe_Error(t *testing.T) {
 	warnings := NewWarningCollection()
 	resource := NewTestBaseResourceMockResourceError()
-	err, metrics := resource.Probe(warnings)
+	metrics, err := resource.Probe(warnings)
 
 	assert.NotNil(t, err)
 	assert.Empty(t, metrics)

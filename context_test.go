@@ -62,9 +62,9 @@ func TestBaseContext_Performance(t *testing.T) {
 }
 
 func TestScalarContext_Evaluate(t *testing.T) {
-	err, warningRange := ParseRange("0:2")
+	warningRange, err := ParseRange("0:2")
 	assert.Nil(t, err)
-	err, criticalRange := ParseRange("0:4")
+	criticalRange, err := ParseRange("0:4")
 	assert.Nil(t, err)
 	context := NewScalarContext("ctx", warningRange, criticalRange)
 
@@ -87,9 +87,9 @@ func TestScalarContext_Evaluate(t *testing.T) {
 }
 
 func TestScalarContext_Performance(t *testing.T) {
-	err, warningRange := ParseRange("0:2")
+	warningRange, err := ParseRange("0:2")
 	assert.Nil(t, err)
-	err, criticalRange := ParseRange("0:4")
+	criticalRange, err := ParseRange("0:4")
 	assert.Nil(t, err)
 	context := NewScalarContext("ctx", warningRange, criticalRange)
 

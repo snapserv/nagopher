@@ -19,12 +19,12 @@
 package nagopher
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"sort"
 )
 
+// Check represents a nagopher check containing all required objects for execution, evaluation and visualization.
 type Check struct {
 	name       string
 	resources  []Resource
@@ -34,6 +34,7 @@ type Check struct {
 	summarizer Summarizer
 }
 
+// NewCheck instantiates 'Check' with a given name and summarizer.
 func NewCheck(name string, summarizer Summarizer) *Check {
 	return &Check{
 		name:       name,
@@ -43,7 +44,8 @@ func NewCheck(name string, summarizer Summarizer) *Check {
 	}
 }
 
-func (c *Check) Run(warnings *WarningCollection) error {
+// Run executes all probes of the attached resources and collects their results including performance data.
+func (c *Check) Run(warnings *WarningCollection) {
 	for _, resource := range c.resources {
 		if err := c.evaluateResource(warnings, resource); err != nil {
 			c.results.Add(NewResult(StateUnknown, nil, nil, resource, err.Error()))
@@ -53,58 +55,61 @@ func (c *Check) Run(warnings *WarningCollection) error {
 	sort.Slice(c.perfData, func(i int, j int) bool {
 		return c.perfData[i].metric.Name() < c.perfData[j].metric.Name()
 	})
-
-	return nil
 }
 
+// AttachResources attaches one or more resources to the check.
 func (c *Check) AttachResources(resources ...Resource) {
 	c.resources = append(c.resources, resources...)
 }
 
+// AttachContexts attaches one or more contexts to the check.
 func (c *Check) AttachContexts(contexts ...Context) {
 	for _, context := range contexts {
 		c.contexts[context.Name()] = context
 	}
 }
 
+// GetState returns the most significant state based on current check results.
 func (c *Check) GetState() State {
 	return c.results.MostSignificantState()
 }
 
+// GetSummary returns the output of the checks summarizer.
 func (c *Check) GetSummary() string {
 	if c.results.Count() == 0 {
 		return c.summarizer.Empty()
-	} else {
-		if c.GetState() == StateOk {
-			return c.summarizer.Ok(c.results)
-		} else {
-			return c.summarizer.Problem(c.results)
-		}
 	}
+
+	if c.GetState() == StateOk {
+		return c.summarizer.Ok(c.results)
+	}
+
+	return c.summarizer.Problem(c.results)
 }
 
+// GetVerboseSummary returns the verbose output of the checks summarizer.
 func (c *Check) GetVerboseSummary() []string {
 	return c.summarizer.Verbose(c.results)
 }
 
+// GetPerfData returns the currently available performance data.
 func (c *Check) GetPerfData() []*PerfData {
 	return c.perfData
 }
 
 func (c *Check) evaluateResource(warnings *WarningCollection, resource Resource) error {
-	err, metrics := resource.Probe(warnings)
+	metrics, err := resource.Probe(warnings)
 	if err != nil {
 		return err
 	}
 	if len(metrics) == 0 {
-		return errors.New(fmt.Sprintf("nagopher: resource [%s] did not return any metrics",
-			reflect.TypeOf(resource)))
+		return fmt.Errorf("nagopher: resource [%s] did not return any metrics", reflect.TypeOf(resource))
 	}
 
 	for _, metric := range metrics {
 		context, ok := c.contexts[metric.ContextName()]
 		if !ok {
-			return errors.New(fmt.Sprintf("nagopher: missing context with name [%s]", metric.ContextName()))
+			return fmt.Errorf("nagopher: missing context with name [%s]", metric.ContextName())
 		}
 
 		result := context.Evaluate(metric, resource)

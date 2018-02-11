@@ -24,11 +24,14 @@ import (
 	"strings"
 )
 
+// Runtime represents a framework for executing and outputting checks.
 type Runtime struct {
 	fmt.Stringer
 	verbose bool
 }
 
+// CheckResult represents the result of an executed check, represented by an exit code and the string representation of
+// the check output according to the Nagios plugin specifications.
 type CheckResult struct {
 	ExitCode int
 	Output   string
@@ -36,17 +39,21 @@ type CheckResult struct {
 
 var illegalCharacters = []string{"|"}
 
+// NewRuntime instantiates 'Runtime' and specifies if the check output should be verbose or not.
 func NewRuntime(verbose bool) *Runtime {
 	return &Runtime{
 		verbose: verbose,
 	}
 }
 
+// Execute executes a single check and returns a 'CheckResult' object. Any errors occurring within the checks are not
+// being passed to the caller, as they will be represented as 'StateUnknown' results. In case an unexpected runtime
+// error occurs, this method will call panic - however this should never happen under normal circumstances.
 func (o *Runtime) Execute(check *Check) CheckResult {
 	warnings := NewWarningCollection()
 	check.Run(warnings)
 
-	err, checkOutput := o.buildCheckOutput(warnings, check)
+	checkOutput, err := o.buildCheckOutput(check, warnings)
 	if err != nil {
 		panic(fmt.Sprintf("nagopher: unexpected runtime error [%s]", err.Error()))
 	}
@@ -57,19 +64,21 @@ func (o *Runtime) Execute(check *Check) CheckResult {
 	}
 }
 
+// ExecuteAndExit is a helper method for calling 'Execute', followed by printing the returned check results and exiting
+// the current process with the returned exit code.
 func (o *Runtime) ExecuteAndExit(check *Check) {
 	result := o.Execute(check)
 	fmt.Print(result.Output)
 	os.Exit(result.ExitCode)
 }
 
-func (o *Runtime) buildCheckOutput(warnings *WarningCollection, check *Check) (error, string) {
-	output := o.buildCheckStatusOutput(warnings, check)
+func (o *Runtime) buildCheckOutput(check *Check, warnings *WarningCollection) (string, error) {
+	output := o.buildCheckStatusOutput(check, warnings)
 
-	if err, perfData := o.buildCheckPerfDataOutput(warnings, check.GetPerfData(), " "); err == nil {
+	if perfData, err := o.buildCheckPerfDataOutput(check.GetPerfData(), " ", warnings); err == nil {
 		output += " | " + perfData
 	} else {
-		return err, ""
+		return "", err
 	}
 	output += "\n"
 
@@ -84,10 +93,10 @@ func (o *Runtime) buildCheckOutput(warnings *WarningCollection, check *Check) (e
 		output += strings.Join(o.filterStrings(nil, warningStrings), "\n") + "\n"
 	}
 
-	return nil, output
+	return output, nil
 }
 
-func (o *Runtime) buildCheckStatusOutput(warnings *WarningCollection, check *Check) string {
+func (o *Runtime) buildCheckStatusOutput(check *Check, warnings *WarningCollection) string {
 	var output []string
 
 	if check.name != "" {
@@ -101,17 +110,17 @@ func (o *Runtime) buildCheckStatusOutput(warnings *WarningCollection, check *Che
 	return o.filterString(warnings, strings.Join(output, " "))
 }
 
-func (o *Runtime) buildCheckPerfDataOutput(warnings *WarningCollection, perfData []*PerfData, separator string) (error, string) {
+func (o *Runtime) buildCheckPerfDataOutput(perfData []*PerfData, separator string, warnings *WarningCollection) (string, error) {
 	perfDataStrings := make([]string, len(perfData))
 	for key, value := range perfData {
-		if err, output := value.BuildOutput(); err == nil {
+		if output, err := value.BuildOutput(); err == nil {
 			perfDataStrings[key] = output
 		} else {
-			return err, ""
+			return "", err
 		}
 	}
 
-	return nil, o.filterString(warnings, strings.Join(perfDataStrings, separator))
+	return o.filterString(warnings, strings.Join(perfDataStrings, separator)), nil
 }
 
 func (o *Runtime) filterString(warnings *WarningCollection, value string) string {

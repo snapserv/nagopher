@@ -34,12 +34,12 @@ func NewTestRuntimeMockResource() *TestRuntimeMockResource {
 	}
 }
 
-func (r *TestRuntimeMockResource) Probe(warnings *WarningCollection) (error, []Metric) {
-	return nil, []Metric{
+func (r *TestRuntimeMockResource) Probe(warnings *WarningCollection) ([]Metric, error) {
+	return []Metric{
 		NewMetric("usage1", 49.4, "%", nil, "usage"),
 		NewMetric("usage2", 92.6, "%", nil, "usage"),
 		NewMetric("usage3", 83.1, "|", nil, "usage"),
-	}
+	}, nil
 }
 
 func TestRuntime_Execute_NonVerbose(t *testing.T) {
@@ -62,7 +62,7 @@ func TestRuntime_Execute_NonVerbose(t *testing.T) {
 }
 
 func TestRuntime_Execute_Verbose(t *testing.T) {
-	err, warningRange := ParseRange("10:80")
+	warningRange, err := ParseRange("10:80")
 	assert.Nil(t, err)
 
 	check := NewCheck("usage", NewBaseSummary())

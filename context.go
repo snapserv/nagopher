@@ -23,6 +23,7 @@ import (
 	"strconv"
 )
 
+// Context represents a interface for all context types.
 type Context interface {
 	Name() string
 	Describe(Metric) string
@@ -30,12 +31,14 @@ type Context interface {
 	Performance(Metric, Resource) *PerfData
 }
 
+// BaseContext represents a generic context from which all other context types should originate.
 type BaseContext struct {
 	name          string
 	format        string
 	resultFactory ResultFactory
 }
 
+// ScalarContext represents a context for scalar values with support for warning/critical threshold ranges.
 type ScalarContext struct {
 	*BaseContext
 
@@ -43,6 +46,7 @@ type ScalarContext struct {
 	criticalRange *Range
 }
 
+// NewContext instantiates 'BaseContext' with a given name and format string.
 func NewContext(name string, format string) *BaseContext {
 	return &BaseContext{
 		name:          name,
@@ -51,14 +55,17 @@ func NewContext(name string, format string) *BaseContext {
 	}
 }
 
+// SetResultFactory allows overriding the default result factory, which by default instantiates 'BaseResult'.
 func (c *BaseContext) SetResultFactory(resultFactory ResultFactory) {
 	c.resultFactory = resultFactory
 }
 
+// Name represents a getter for the 'name' attribute.
 func (c *BaseContext) Name() string {
 	return c.name
 }
 
+// Describe returns a formatted string based on the 'format' attribute for the given metric.
 func (c *BaseContext) Describe(metric Metric) string {
 	data := map[string]interface{}{
 		"name":       metric.Name(),
@@ -70,14 +77,17 @@ func (c *BaseContext) Describe(metric Metric) string {
 	return format.Sprintf(c.format, data)
 }
 
+// Evaluate returns a Result object for the given metric and resource.
 func (c *BaseContext) Evaluate(metric Metric, resource Resource) Result {
 	return c.resultFactory(StateOk, metric, c, resource, "")
 }
 
+// Performance returns performance data for the given metric and resource.
 func (c *BaseContext) Performance(metric Metric, resource Resource) *PerfData {
 	return nil
 }
 
+// NewScalarContext instantiates 'ScalarContext' with the given name and optional warning/critical threshold ranges.
 func NewScalarContext(name string, warningRange *Range, criticalRange *Range) *ScalarContext {
 	return &ScalarContext{
 		BaseContext: NewContext(name, "%<name>s is %<value_unit>s"),
@@ -87,6 +97,8 @@ func NewScalarContext(name string, warningRange *Range, criticalRange *Range) *S
 	}
 }
 
+// Evaluate checks if the given metric and resource match the warning/critical threshold ranges, if given,
+// and returns the appropriate Result object.
 func (c *ScalarContext) Evaluate(metric Metric, resource Resource) Result {
 	if c.criticalRange != nil && !c.criticalRange.Match(metric.Value()) {
 		return c.resultFactory(StateCritical, metric, c, resource, c.criticalRange.ViolationHint())
@@ -97,6 +109,7 @@ func (c *ScalarContext) Evaluate(metric Metric, resource Resource) Result {
 	}
 }
 
+// Performance returns the performance data for the scalar context, including the threshold ranges if set.
 func (c *ScalarContext) Performance(metric Metric, resource Resource) *PerfData {
 	return &PerfData{
 		metric:        metric,

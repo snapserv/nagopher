@@ -20,6 +20,7 @@ package nagopher
 
 import "fmt"
 
+// Summarizer represents a interface for all summary types.
 type Summarizer interface {
 	Ok(*ResultCollection) string
 	Problem(*ResultCollection) string
@@ -27,20 +28,27 @@ type Summarizer interface {
 	Empty() string
 }
 
+// BaseSummary represents a generic context from which all other result types should originate.
 type BaseSummary struct{}
 
+// NewBaseSummary instantiates 'BaseSummary'.
 func NewBaseSummary() *BaseSummary {
 	return &BaseSummary{}
 }
 
+// Ok returns the string representation of the most-significant result, which is always the first element in a
+// 'ResultCollection' object. This method should be called if the global check state equals to 'StateOk'.
 func (s *BaseSummary) Ok(resultCollection *ResultCollection) string {
 	return resultCollection.Get()[0].String()
 }
 
+// Problem returns the string representation of the most-significant result, which is always the first element in a
+// 'ResultCollection' object. This method should be called if the global check state does not equal to 'StateOk'.
 func (s *BaseSummary) Problem(resultCollection *ResultCollection) string {
 	return resultCollection.Get()[0].String()
 }
 
+// Verbose returns the string representation of all results which do not have a state equal to 'StateOk'.
 func (s *BaseSummary) Verbose(resultCollection *ResultCollection) []string {
 	var messages []string
 
@@ -55,6 +63,8 @@ func (s *BaseSummary) Verbose(resultCollection *ResultCollection) []string {
 	return messages
 }
 
+// Empty returns the string representation when no results are available. This method should be called when the caller
+// does not have any result collection or the result collection is empty.
 func (s *BaseSummary) Empty() string {
 	return "No check results"
 }

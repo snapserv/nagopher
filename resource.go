@@ -18,16 +18,23 @@
 
 package nagopher
 
+// Resource represents a interface for all resource types.
 type Resource interface {
-	Probe(warnings *WarningCollection) (error, []Metric)
+	Probe(warnings *WarningCollection) ([]Metric, error)
 }
 
+// BaseResource represents a generic context from which all other resource types should originate.
 type BaseResource struct{}
 
+// NewResource instantiates 'BaseResource'.
 func NewResource() *BaseResource {
 	return &BaseResource{}
 }
 
-func (r *BaseResource) Probe(warnings *WarningCollection) (error, []Metric) {
-	return nil, []Metric{}
+// Probe executes all the required check logic and returns one or more 'Metric' objects. Warnings can be passed through
+// the provided WarningCollection variable which gets passed. In case any of the check logic fail, the error should be
+// returned without panicking. The base resource does not execute any check logic and defaults to returning an empty
+// Metric slice without an error.
+func (r *BaseResource) Probe(warnings *WarningCollection) ([]Metric, error) {
+	return []Metric{}, nil
 }

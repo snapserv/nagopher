@@ -18,14 +18,20 @@
 
 package nagopher
 
+// State represents a result state, containing an exit code and human-readable description.
 type State struct {
 	ExitCode    int
 	Description string
 }
 
-var (
-	StateOk       = State{ExitCode: 0, Description: "ok"}
-	StateWarning  = State{ExitCode: 1, Description: "warning"}
-	StateCritical = State{ExitCode: 2, Description: "critical"}
-	StateUnknown  = State{ExitCode: 3, Description: "unknown"}
-)
+// StateOk represents an "OK" state with exit code 0.
+var StateOk = State{ExitCode: 0, Description: "ok"}
+
+// StateWarning represents a "WARNING" state with exit code 1.
+var StateWarning = State{ExitCode: 1, Description: "warning"}
+
+// StateCritical represents a "CRITICAL" state with exit code 2.
+var StateCritical = State{ExitCode: 2, Description: "critical"}
+
+// StateUnknown represents an "UNKNOWN" state with exit code 3.
+var StateUnknown = State{ExitCode: 3, Description: "unknown"}

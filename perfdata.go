@@ -19,34 +19,39 @@
 package nagopher
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 )
 
+// PerfData represents performance data based on a Metric object and threshold ranges
 type PerfData struct {
 	metric        Metric
 	warningRange  *Range
 	criticalRange *Range
 }
 
-func NewPerfData(name string, value float64, valueUnit string, valueRange *Range, warningRange *Range, criticalRange *Range) (error, *PerfData) {
+// NewPerfData instantiates 'PerfData' with a given name, value, unit, range and threshold ranges. The name must not
+// contain any of these illegal characters: = (equal) ' (single quote)
+func NewPerfData(name string, value float64, valueUnit string, valueRange *Range,
+	warningRange *Range, criticalRange *Range) (*PerfData, error) {
 	if strings.ContainsAny(name, "'=") {
-		return errors.New(fmt.Sprintf("nagopher: perfdata name [%s] contains invalid characters", name)), nil
+		return nil, fmt.Errorf("nagopher: perfdata name [%s] contains invalid characters", name)
 	}
 
-	return nil, &PerfData{
+	return &PerfData{
 		metric:        NewMetric(name, value, valueUnit, valueRange, "perfdata"),
 		warningRange:  warningRange,
 		criticalRange: criticalRange,
-	}
+	}, nil
 }
 
-func (pd *PerfData) BuildOutput() (error, string) {
-	err, quotedName := pd.quoteString(pd.metric.Name())
+// BuildOutput returns a string according to the Nagios plugin specifications in the format:
+// '<name>=<value>[;<warningRange>][;<criticalRange>][;<minimum>][;<maximum>]
+func (pd *PerfData) BuildOutput() (string, error) {
+	quotedName, err := pd.quoteString(pd.metric.Name())
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 
 	output := []string{fmt.Sprintf(
@@ -83,18 +88,18 @@ func (pd *PerfData) BuildOutput() (error, string) {
 		output = append(output, "", "")
 	}
 
-	return nil, strings.TrimRight(strings.Join(output, ";"), ";")
+	return strings.TrimRight(strings.Join(output, ";"), ";"), nil
 }
 
-func (pd *PerfData) quoteString(value string) (error, string) {
+func (pd *PerfData) quoteString(value string) (string, error) {
 	match, err := regexp.MatchString("^\\w+$", value)
 	if err != nil {
-		return errors.New(fmt.Sprintf("nagopher: unexpected regexp error (%s)", err.Error())), ""
+		return "", fmt.Errorf("nagopher: unexpected regexp error (%s)", err.Error())
 	}
 
 	if match {
-		return nil, value
-	} else {
-		return nil, fmt.Sprintf("'%s'", value)
+		return value, nil
 	}
+
+	return fmt.Sprintf("'%s'", value), nil
 }

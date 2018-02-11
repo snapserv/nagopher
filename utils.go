@@ -18,34 +18,32 @@
 
 package nagopher
 
+// Warning represents a interface for all warning types.
 type Warning interface {
 	Warning() string
 }
 
-type warningString struct {
-	s string
-}
-
+// WarningCollection represents a collection of 0-n warnings.
 type WarningCollection struct {
 	warnings []Warning
 }
 
+// NewWarning instantiates 'Warning' with the given text.
 func NewWarning(text string) Warning {
 	return &warningString{text}
 }
 
-func (w *warningString) Warning() string {
-	return w.s
-}
-
+// NewWarningCollection instantiates 'WarningCollection', which by default is empty.
 func NewWarningCollection() *WarningCollection {
 	return &WarningCollection{}
 }
 
+// Add adds one or more 'Warning' objects to the collection.
 func (c *WarningCollection) Add(warnings ...Warning) {
 	c.warnings = append(c.warnings, warnings...)
 }
 
+// GetStrings returns a list containing the string representation of all stored 'Warning' objects.
 func (c *WarningCollection) GetStrings() []string {
 	var results []string
 	for _, warning := range c.warnings {
@@ -53,4 +51,12 @@ func (c *WarningCollection) GetStrings() []string {
 	}
 
 	return results
+}
+
+type warningString struct {
+	s string
+}
+
+func (w *warningString) Warning() string {
+	return w.s
 }

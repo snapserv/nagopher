@@ -24,84 +24,85 @@ import (
 )
 
 func TestRange_String_Empty(t *testing.T) {
-	err, r := ParseRange("")
+	r, err := ParseRange("")
 	assert.Nil(t, err)
 	assert.Equal(t, "", r.String())
 }
 
 func TestRange_String_ExplicitStartEnd(t *testing.T) {
-	err, r := ParseRange("1:9")
+	r, err := ParseRange("1:9")
 	assert.Nil(t, err)
 	assert.Equal(t, "1:9", r.String())
 }
 
 func TestRange_String_OmitStart(t *testing.T) {
-	err, r := ParseRange("9")
+	r, err := ParseRange("9")
 	assert.Nil(t, err)
 	assert.Equal(t, "9", r.String())
 }
 
 func TestRange_String_OmitEnd(t *testing.T) {
-	err, r := ParseRange("1:")
+	r, err := ParseRange("1:")
 	assert.Nil(t, err)
 	assert.Equal(t, "1:", r.String())
 }
 
 func TestRange_String_NegativeInfinityStart(t *testing.T) {
-	err, r := ParseRange("~:10")
+	r, err := ParseRange("~:10")
 	assert.Nil(t, err)
 	assert.Equal(t, "~:10", r.String())
 }
 
 func TestRange_String_NegativeInfinityEnd(t *testing.T) {
-	err, _ := ParseRange(":~")
+	r, err := ParseRange(":~")
+	assert.Nil(t, r)
 	assert.NotNil(t, err)
 }
 
 func TestRange_String_Invert(t *testing.T) {
-	err, r := ParseRange("@1:9")
+	r, err := ParseRange("@1:9")
 	assert.Nil(t, err)
 	assert.Equal(t, "@1:9", r.String())
 }
 
 func TestRange_String_LargeNumberStart(t *testing.T) {
-	err, r := ParseRange("4200000000:")
+	r, err := ParseRange("4200000000:")
 	assert.Nil(t, err)
 	assert.Equal(t, "4200000000:", r.String())
 }
 
 func TestRange_String_LargeNumberEnd(t *testing.T) {
-	err, r := ParseRange("4200000000")
+	r, err := ParseRange("4200000000")
 	assert.Nil(t, err)
 	assert.Equal(t, "4200000000", r.String())
 }
 
 func TestRange_ViolationHint_Normal(t *testing.T) {
-	err, r := ParseRange("1:9")
+	r, err := ParseRange("1:9")
 	assert.Nil(t, err)
 	assert.Equal(t, "outside range 1:9", r.ViolationHint())
 }
 
 func TestRange_ViolationHint_OmitStart(t *testing.T) {
-	err, r := ParseRange(":9")
+	r, err := ParseRange(":9")
 	assert.Nil(t, err)
 	assert.Equal(t, "outside range 0:9", r.ViolationHint())
 }
 
 func TestRange_ViolationHint_OmitEnd(t *testing.T) {
-	err, r := ParseRange("1:")
+	r, err := ParseRange("1:")
 	assert.Nil(t, err)
 	assert.Equal(t, "outside range 1:inf", r.ViolationHint())
 }
 
 func TestRange_ViolationHint_NegativeInfinityStart(t *testing.T) {
-	err, r := ParseRange("~:1")
+	r, err := ParseRange("~:1")
 	assert.Nil(t, err)
 	assert.Equal(t, "outside range -inf:1", r.ViolationHint())
 }
 
 func TestRange_ViolationHint_Empty(t *testing.T) {
-	err, r := ParseRange("")
+	r, err := ParseRange("")
 	assert.Nil(t, err)
 	assert.Equal(t, "outside range 0:inf", r.ViolationHint())
 }
