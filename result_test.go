@@ -19,8 +19,9 @@
 package nagopher
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestResultCollection_Count(t *testing.T) {
@@ -32,6 +33,24 @@ func TestResultCollection_Count(t *testing.T) {
 	)
 
 	assert.Equal(t, 3, resultCollection.Count())
+}
+
+func TestResultCollection_GetByMetricName(t *testing.T) {
+	metrics := []Metric{
+		NewMetric("metric1", 1, "", nil, ""),
+		NewMetric("metric2", 2, "", nil, ""),
+		NewMetric("metric3", 3, "", nil, ""),
+	}
+
+	resultCollection := NewResultCollection()
+	for _, metric := range metrics {
+		resultCollection.Add(NewResult(StateOk, metric, nil, nil, ""))
+	}
+
+	assert.Equal(t, 3, resultCollection.Count())
+	result := resultCollection.GetByMetricName("metric2")
+	assert.NotNil(t, result)
+	assert.Equal(t, metrics[1], result.Metric())
 }
 
 func TestResultCollection_MostSignificantState_Normal(t *testing.T) {

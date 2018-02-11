@@ -46,6 +46,19 @@ func (rc *ResultCollection) Get() []Result {
 	return rc.results
 }
 
+// GetByMetricName tries to find a result where the associated metric has the given name. Returns nil if no metric could
+// be found in the current result collection.
+func (rc *ResultCollection) GetByMetricName(name string) Result {
+	for _, result := range rc.results {
+		metric := result.Metric()
+		if metric != nil && metric.Name() == name {
+			return result
+		}
+	}
+
+	return nil
+}
+
 // Count is a helper method which returns the current amount of results.
 func (rc *ResultCollection) Count() int {
 	return len(rc.results)
@@ -73,8 +86,9 @@ type ResultFactory func(state State, metric Metric, context Context, resource Re
 
 // Result represents a interface for all result types
 type Result interface {
-	State() State
 	String() string
+	State() State
+	Metric() Metric
 }
 
 // BaseResult represents a generic context from which all other result types should originate.
@@ -133,4 +147,9 @@ func (r *BaseResult) String() string {
 // State represents a getter for the 'state' attribute.
 func (r *BaseResult) State() State {
 	return r.state
+}
+
+// Metric represents a getter for the 'metric' attribute.
+func (r *BaseResult) Metric() Metric {
+	return r.metric
 }
