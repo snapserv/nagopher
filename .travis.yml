@@ -5,4 +5,5 @@ go:
   - 1.9.x
 
 script:
-  - make devel-lint devel-test devel-coverage
+  - make all
+  - make coverage

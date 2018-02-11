@@ -1,12 +1,11 @@
-GO     = go
-GOFMT  = go fmt
-GOLINT = golint
-
+GO             = go
+GOFMT          = go fmt
+GOLINT         = golint
 GOVERALLS      = goveralls
 GOVERALLS_ARGS = -service=travis-ci
 
 .PHONY: all
-all: devel-lint devel-test build
+all: lint test build
 
 .PHONY: build
 build: deps
@@ -21,15 +20,15 @@ devel-deps: deps
 	$(GO) get github.com/golang/lint/golint
 	$(GO) get github.com/mattn/goveralls
 
-.PHONY: devel-lint
-devel-lint: devel-deps
+.PHONY: lint
+lint: devel-deps
 	$(GO) vet ./...
 	$(GOLINT) ./...
 
-.PHONY: devel-test
-devel-test: devel-deps
+.PHONY: test
+test: devel-deps
 	$(GO) test -v ./...
 
-.PHONY: devel-coverage
-devel-coverage: devel-deps
+.PHONY: coverage
+coverage: devel-deps
 	$(GOVERALLS) $(GOVERALLS_ARGS)
