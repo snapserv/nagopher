@@ -19,8 +19,9 @@
 package nagopher
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPerfData_String_NormalLabel(t *testing.T) {

@@ -19,10 +19,9 @@
 package nagopher
 
 import (
-	"strconv"
-
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/chonla/format"
 )

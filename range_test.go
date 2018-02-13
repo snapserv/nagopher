@@ -19,8 +19,9 @@
 package nagopher
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRange_String_Empty(t *testing.T) {
