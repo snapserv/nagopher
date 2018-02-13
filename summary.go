@@ -20,7 +20,6 @@ package nagopher
 
 import (
 	"fmt"
-	"math"
 )
 
 // Summarizer represents a interface for all summary types.
@@ -74,7 +73,7 @@ func (s *BaseSummary) Empty() string {
 
 // GetNumericMetricValue returns the value of a 'NumericMetric' within the given result collection by searching for the
 // name of the metric. NaN gets returned in case the metric could not be retrieved.
-func (s *BaseSummary) GetNumericMetricValue(resultCollection *ResultCollection, name string) float64 {
+func (s *BaseSummary) GetNumericMetricValue(resultCollection *ResultCollection, name string, defaultValue float64) float64 {
 	result := resultCollection.GetByMetricName(name)
 	if result != nil {
 		if rawMetric := result.Metric(); rawMetric != nil {
@@ -84,12 +83,12 @@ func (s *BaseSummary) GetNumericMetricValue(resultCollection *ResultCollection, 
 		}
 	}
 
-	return math.NaN()
+	return defaultValue
 }
 
 // GetStringMetricValue returns the value of a 'StringMetric' within the given result collection by searching for the
 // name of the metric. An empty string gets returned in case the metric could not be retrieved.
-func (s *BaseSummary) GetStringMetricValue(resultCollection *ResultCollection, name string) string {
+func (s *BaseSummary) GetStringMetricValue(resultCollection *ResultCollection, name string, defaultValue string) string {
 	result := resultCollection.GetByMetricName(name)
 	if result != nil {
 		if rawMetric := result.Metric(); rawMetric != nil {
@@ -99,5 +98,5 @@ func (s *BaseSummary) GetStringMetricValue(resultCollection *ResultCollection, n
 		}
 	}
 
-	return ""
+	return defaultValue
 }
