@@ -19,9 +19,10 @@
 package nagopher
 
 import (
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type TestRuntimeMockResource struct {
@@ -36,9 +37,9 @@ func NewTestRuntimeMockResource() *TestRuntimeMockResource {
 
 func (r *TestRuntimeMockResource) Probe(warnings *WarningCollection) ([]Metric, error) {
 	return []Metric{
-		NewMetric("usage1", 49.4, "%", nil, "usage"),
-		NewMetric("usage2", 92.6, "%", nil, "usage"),
-		NewMetric("usage3", 83.1, "|", nil, "usage"),
+		NewNumberMetric("usage1", 49.4, "%", nil, "usage"),
+		NewNumberMetric("usage2", 92.6, "%", nil, "usage"),
+		NewNumberMetric("usage3", 83.1, "|", nil, "usage"),
 	}, nil
 }
 

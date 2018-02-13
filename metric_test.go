@@ -19,31 +19,37 @@
 package nagopher
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestBaseMetric_ValueUnit_Float(t *testing.T) {
-	metric := NewMetric("time", 3.141, "s", nil, "")
+func TestBaseMetric_ContextName(t *testing.T) {
+	metric := NewBaseMetric("metric", "", nil, "context")
+	assert.Equal(t, "context", metric.ContextName())
+}
+
+func TestNumberMetric_ValueUnit_Float(t *testing.T) {
+	metric := NewNumberMetric("time", 3.141, "s", nil, "")
 	assert.Equal(t, "3.141s", metric.ValueUnit())
 }
 
-func TestBaseMetric_ValueUnit_Integer(t *testing.T) {
-	metric := NewMetric("count", 42, "", nil, "")
+func TestNumberMetric_ValueUnit_Integer(t *testing.T) {
+	metric := NewNumberMetric("count", 42, "", nil, "")
 	assert.Equal(t, "42", metric.ValueUnit())
 }
 
-func TestBaseMetric_ValueUnit_LargeInteger(t *testing.T) {
-	metric := NewMetric("grains", 4200000000, "", nil, "")
+func TestNumberMetric_ValueUnit_LargeInteger(t *testing.T) {
+	metric := NewNumberMetric("grains", 4200000000, "", nil, "")
 	assert.Equal(t, "4200000000", metric.ValueUnit())
 }
 
-func TestBaseMetric_ValueUnit_LargeFloat(t *testing.T) {
-	metric := NewMetric("grains", 420000.42, "", nil, "")
+func TestNumberMetric_ValueUnit_LargeFloat(t *testing.T) {
+	metric := NewNumberMetric("grains", 420000.42, "", nil, "")
 	assert.Equal(t, "420000.42", metric.ValueUnit())
 }
 
-func TestBaseMetric_ContextName(t *testing.T) {
-	metric := NewMetric("metric", 42, "", nil, "context")
-	assert.Equal(t, "context", metric.ContextName())
+func TestStringMetric_ValueUnit(t *testing.T) {
+	metric := NewStringMetric("state", "OK", "")
+	assert.Equal(t, "OK", metric.ValueUnit())
 }

@@ -19,8 +19,12 @@
 package nagopher
 
 import (
-	"github.com/chonla/format"
 	"strconv"
+
+	"fmt"
+	"reflect"
+
+	"github.com/chonla/format"
 )
 
 // Context represents a interface for all context types.
@@ -67,11 +71,24 @@ func (c *BaseContext) Name() string {
 
 // Describe returns a formatted string based on the 'format' attribute for the given metric.
 func (c *BaseContext) Describe(metric Metric) string {
-	data := map[string]interface{}{
-		"name":       metric.Name(),
-		"value":      strconv.FormatFloat(metric.Value(), 'f', -1, strconv.IntSize),
-		"unit":       metric.Unit(),
-		"value_unit": metric.ValueUnit(),
+	var data map[string]interface{}
+
+	switch m := metric.(type) {
+	case *NumberMetric:
+		data = map[string]interface{}{
+			"name":       metric.Name(),
+			"value":      strconv.FormatFloat(m.Value(), 'f', -1, strconv.IntSize),
+			"unit":       metric.Unit(),
+			"value_unit": metric.ValueUnit(),
+		}
+
+	case *StringMetric:
+		data = map[string]interface{}{
+			"name":       metric.Name(),
+			"value":      m.Value(),
+			"unit":       metric.Unit(),
+			"value_unit": metric.ValueUnit(),
+		}
 	}
 
 	return format.Sprintf(c.format, data)
@@ -100,9 +117,15 @@ func NewScalarContext(name string, warningRange *Range, criticalRange *Range) *S
 // Evaluate checks if the given metric and resource match the warning/critical threshold ranges, if given,
 // and returns the appropriate Result object.
 func (c *ScalarContext) Evaluate(metric Metric, resource Resource) Result {
-	if c.criticalRange != nil && !c.criticalRange.Match(metric.Value()) {
+	numberMetric, ok := metric.(*NumberMetric)
+	if !ok {
+		return c.resultFactory(StateUnknown, metric, c, resource,
+			fmt.Sprintf("ScalarContext can not process metrics of type [%s]", reflect.TypeOf(metric)))
+	}
+
+	if c.criticalRange != nil && !c.criticalRange.Match(numberMetric.Value()) {
 		return c.resultFactory(StateCritical, metric, c, resource, c.criticalRange.ViolationHint())
-	} else if c.warningRange != nil && !c.warningRange.Match(metric.Value()) {
+	} else if c.warningRange != nil && !c.warningRange.Match(numberMetric.Value()) {
 		return c.resultFactory(StateWarning, metric, c, resource, c.warningRange.ViolationHint())
 	} else {
 		return c.resultFactory(StateOk, metric, c, resource, "")

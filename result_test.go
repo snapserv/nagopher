@@ -37,9 +37,9 @@ func TestResultCollection_Count(t *testing.T) {
 
 func TestResultCollection_GetByMetricName(t *testing.T) {
 	metrics := []Metric{
-		NewMetric("metric1", 1, "", nil, ""),
-		NewMetric("metric2", 2, "", nil, ""),
-		NewMetric("metric3", 3, "", nil, ""),
+		NewNumberMetric("metric1", 1, "", nil, ""),
+		NewNumberMetric("metric2", 2, "", nil, ""),
+		NewNumberMetric("metric3", 3, "", nil, ""),
 	}
 
 	resultCollection := NewResultCollection()

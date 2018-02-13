@@ -89,6 +89,7 @@ type Result interface {
 	String() string
 	State() State
 	Metric() Metric
+	Hint() string
 }
 
 // BaseResult represents a generic context from which all other result types should originate.
@@ -152,4 +153,9 @@ func (r *BaseResult) State() State {
 // Metric represents a getter for the 'metric' attribute.
 func (r *BaseResult) Metric() Metric {
 	return r.metric
+}
+
+// Hint represents a getter for the 'hint' attribute.
+func (r *BaseResult) Hint() string {
+	return r.hint
 }

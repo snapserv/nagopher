@@ -40,7 +40,7 @@ func NewPerfData(name string, value float64, valueUnit string, valueRange *Range
 	}
 
 	return &PerfData{
-		metric:        NewMetric(name, value, valueUnit, valueRange, "perfdata"),
+		metric:        NewNumberMetric(name, value, valueUnit, valueRange, "perfdata"),
 		warningRange:  warningRange,
 		criticalRange: criticalRange,
 	}, nil
