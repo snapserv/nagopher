@@ -73,7 +73,7 @@ func (c *BaseContext) Describe(metric Metric) string {
 	var data map[string]interface{}
 
 	switch m := metric.(type) {
-	case *NumberMetric:
+	case *NumericMetric:
 		data = map[string]interface{}{
 			"name":       metric.Name(),
 			"value":      strconv.FormatFloat(m.Value(), 'f', -1, strconv.IntSize),
@@ -116,7 +116,7 @@ func NewScalarContext(name string, warningRange *Range, criticalRange *Range) *S
 // Evaluate checks if the given metric and resource match the warning/critical threshold ranges, if given,
 // and returns the appropriate Result object.
 func (c *ScalarContext) Evaluate(metric Metric, resource Resource) Result {
-	numberMetric, ok := metric.(*NumberMetric)
+	numberMetric, ok := metric.(*NumericMetric)
 	if !ok {
 		return c.resultFactory(StateUnknown, metric, c, resource,
 			fmt.Sprintf("ScalarContext can not process metrics of type [%s]", reflect.TypeOf(metric)))

@@ -43,8 +43,8 @@ type BaseMetric struct {
 	contextName string
 }
 
-// NumberMetric represents a metric type storing numbers as float64.
-type NumberMetric struct {
+// NumericMetric represents a metric type storing numbers as float64.
+type NumericMetric struct {
 	*BaseMetric
 	value float64
 }
@@ -105,27 +105,27 @@ func (m *BaseMetric) ValueUnit() string {
 	return "N/A"
 }
 
-// NewNumberMetric instantiates 'NumberMetric', which represents a metric containing a numeric value. All numbers will
+// NewNumericMetric instantiates 'NumericMetric', which represents a metric containing a numeric value. All numbers will
 // be stored as float64 internally, however always the shortest value without losing precision will be displayed.
-func NewNumberMetric(name string, value float64, valueUnit string, valueRange *Range, contextName string) *NumberMetric {
-	return &NumberMetric{
+func NewNumericMetric(name string, value float64, valueUnit string, valueRange *Range, contextName string) *NumericMetric {
+	return &NumericMetric{
 		BaseMetric: NewBaseMetric(name, valueUnit, valueRange, contextName),
 		value:      value,
 	}
 }
 
 // IsIntegral returns if the current value can be represented as an integer without loosing any precision.
-func (m *NumberMetric) IsIntegral() bool {
+func (m *NumericMetric) IsIntegral() bool {
 	return m.value == float64(int64(m.value))
 }
 
 // Value represents a getter for the 'value' attribute.
-func (m *NumberMetric) Value() float64 {
+func (m *NumericMetric) Value() float64 {
 	return m.value
 }
 
 // ValueString returns the string representation of the metric value
-func (m *NumberMetric) ValueString() string {
+func (m *NumericMetric) ValueString() string {
 	if m.IsIntegral() {
 		return fmt.Sprintf("%d", int64(m.value))
 	}
@@ -134,7 +134,7 @@ func (m *NumberMetric) ValueString() string {
 }
 
 // ValueUnit returns the string representation of the metric, which is '<value><unit>'.
-func (m *NumberMetric) ValueUnit() string {
+func (m *NumericMetric) ValueUnit() string {
 	return m.ValueString() + m.Unit()
 }
 

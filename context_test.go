@@ -31,14 +31,14 @@ func TestBaseContext_Name(t *testing.T) {
 
 func TestBaseContext_Describe_Empty(t *testing.T) {
 	context := NewContext("ctx", "")
-	metric := NewNumberMetric("metric", 0, "", nil, "")
+	metric := NewNumericMetric("metric", 0, "", nil, "")
 
 	assert.Equal(t, "", context.Describe(metric))
 }
 
 func TestBaseContext_Describe_Format(t *testing.T) {
 	context := NewContext("ctx", "name=%<name>s value=%<value>s unit=%<unit>s value_unit=%<value_unit>s")
-	metric := NewNumberMetric("metric", 42, "s", nil, "")
+	metric := NewNumericMetric("metric", 42, "s", nil, "")
 
 	assert.Equal(t, "name=metric value=42 unit=s value_unit=42s", context.Describe(metric))
 }
@@ -47,7 +47,7 @@ func TestBaseContext_Evaluate(t *testing.T) {
 	context := NewContext("ctx", "")
 	context.SetResultFactory(NewResultFactory())
 
-	metric := NewNumberMetric("metric", 42, "", nil, "")
+	metric := NewNumericMetric("metric", 42, "", nil, "")
 	resource := NewResource()
 	expected := NewResult(StateOk, metric, context, resource, "")
 
@@ -56,7 +56,7 @@ func TestBaseContext_Evaluate(t *testing.T) {
 
 func TestBaseContext_Performance(t *testing.T) {
 	context := NewContext("ctx", "")
-	metric := NewNumberMetric("metric", 42, "", nil, "")
+	metric := NewNumericMetric("metric", 42, "", nil, "")
 	resource := NewResource()
 
 	assert.Nil(t, context.Performance(metric, resource))
@@ -80,7 +80,7 @@ func TestScalarContext_Evaluate_Normal(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		metric := NewNumberMetric("metric", test.metricValue, "", nil, "")
+		metric := NewNumericMetric("metric", test.metricValue, "", nil, "")
 		expected := NewResult(test.resultState, metric, context, nil, test.resultHint)
 
 		assert.Equal(t, expected, context.Evaluate(metric, nil))
@@ -103,7 +103,7 @@ func TestScalarContext_Performance(t *testing.T) {
 	assert.Nil(t, err)
 	context := NewScalarContext("ctx", warningRange, criticalRange)
 
-	metric := NewNumberMetric("metric", 42, "", nil, "")
+	metric := NewNumericMetric("metric", 42, "", nil, "")
 	resource := NewResource()
 
 	expected := &PerfData{

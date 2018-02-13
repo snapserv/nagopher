@@ -30,22 +30,22 @@ func TestBaseMetric_ContextName(t *testing.T) {
 }
 
 func TestNumberMetric_ValueUnit_Float(t *testing.T) {
-	metric := NewNumberMetric("time", 3.141, "s", nil, "")
+	metric := NewNumericMetric("time", 3.141, "s", nil, "")
 	assert.Equal(t, "3.141s", metric.ValueUnit())
 }
 
 func TestNumberMetric_ValueUnit_Integer(t *testing.T) {
-	metric := NewNumberMetric("count", 42, "", nil, "")
+	metric := NewNumericMetric("count", 42, "", nil, "")
 	assert.Equal(t, "42", metric.ValueUnit())
 }
 
 func TestNumberMetric_ValueUnit_LargeInteger(t *testing.T) {
-	metric := NewNumberMetric("grains", 4200000000, "", nil, "")
+	metric := NewNumericMetric("grains", 4200000000, "", nil, "")
 	assert.Equal(t, "4200000000", metric.ValueUnit())
 }
 
 func TestNumberMetric_ValueUnit_LargeFloat(t *testing.T) {
-	metric := NewNumberMetric("grains", 420000.42, "", nil, "")
+	metric := NewNumericMetric("grains", 420000.42, "", nil, "")
 	assert.Equal(t, "420000.42", metric.ValueUnit())
 }
 

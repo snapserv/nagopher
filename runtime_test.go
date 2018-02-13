@@ -37,9 +37,9 @@ func NewTestRuntimeMockResource() *TestRuntimeMockResource {
 
 func (r *TestRuntimeMockResource) Probe(warnings *WarningCollection) ([]Metric, error) {
 	return []Metric{
-		NewNumberMetric("usage1", 49.4, "%", nil, "usage"),
-		NewNumberMetric("usage2", 92.6, "%", nil, "usage"),
-		NewNumberMetric("usage3", 83.1, "|", nil, "usage"),
+		NewNumericMetric("usage1", 49.4, "%", nil, "usage"),
+		NewNumericMetric("usage2", 92.6, "%", nil, "usage"),
+		NewNumericMetric("usage3", 83.1, "|", nil, "usage"),
 	}, nil
 }
 
