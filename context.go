@@ -20,6 +20,7 @@ package nagopher
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -183,12 +184,17 @@ func (c *DeltaContext) Evaluate(metric Metric, resource Resource) Result {
 			fmt.Sprintf("DeltaContext can not process metrics of type [%s]", reflect.TypeOf(metric)))
 	}
 
+	metricValue := numberMetric.Value()
+	deltaValue := float64(0)
+	if !math.IsNaN(metricValue) && !math.IsInf(metricValue, -1) && !math.IsInf(metricValue, 1) {
+		*c.previousValue = metricValue
+		deltaValue = metricValue - *c.previousValue
+	}
+
 	deltaMetric := NewNumericMetric(
 		numberMetric.Name()+"_delta",
-		numberMetric.Value()-*c.previousValue,
-		"", nil, numberMetric.ContextName(),
-	)
-	*c.previousValue = numberMetric.Value()
+		deltaValue, "", nil,
+		numberMetric.ContextName())
 
 	if c.criticalRange != nil && !c.criticalRange.Match(deltaMetric.Value()) {
 		return c.resultFactory(StateCritical, deltaMetric, c, resource, c.criticalRange.ViolationHint())

@@ -20,6 +20,7 @@ package nagopher
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 )
 
@@ -135,6 +136,10 @@ func (m *NumericMetric) ValueString() string {
 
 // ValueUnit returns the string representation of the metric, which is '<value><unit>'.
 func (m *NumericMetric) ValueUnit() string {
+	if math.IsNaN(m.value) {
+		return "U"
+	}
+
 	return m.ValueString() + m.Unit()
 }
 
