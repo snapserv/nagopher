@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/chonla/format"
 )
@@ -49,6 +50,23 @@ type ScalarContext struct {
 	criticalRange *Range
 }
 
+// DeltaContext represents a context for calculating deltas of scalar values by comparing the current metric values
+// against previously known data. It is the callers duty to store previous metric values and provide them to this
+// context as a pointer.
+type DeltaContext struct {
+	*ScalarContext
+
+	previousValue *float64
+}
+
+// StringMatchContext represents a context for string values with support for matching against a list of expected values
+type StringMatchContext struct {
+	*BaseContext
+
+	problemState   State
+	expectedValues []string
+}
+
 // NewContext instantiates 'BaseContext' with a given name and format string.
 func NewContext(name string, format string) *BaseContext {
 	return &BaseContext{
@@ -58,14 +76,19 @@ func NewContext(name string, format string) *BaseContext {
 	}
 }
 
-// SetResultFactory allows overriding the default result factory, which by default instantiates 'BaseResult'.
-func (c *BaseContext) SetResultFactory(resultFactory ResultFactory) {
-	c.resultFactory = resultFactory
-}
-
 // Name represents a getter for the 'name' attribute.
 func (c *BaseContext) Name() string {
 	return c.name
+}
+
+// ResultFactory represents a getter for the 'resultFactory' attribute.
+func (c *BaseContext) ResultFactory() ResultFactory {
+	return c.resultFactory
+}
+
+// SetResultFactory allows overriding the default result factory, which by default instantiates 'BaseResult'.
+func (c *BaseContext) SetResultFactory(resultFactory ResultFactory) {
+	c.resultFactory = resultFactory
 }
 
 // Describe returns a formatted string based on the 'format' attribute for the given metric.
@@ -138,4 +161,91 @@ func (c *ScalarContext) Performance(metric Metric, resource Resource) *PerfData 
 		warningRange:  c.warningRange,
 		criticalRange: c.criticalRange,
 	}
+}
+
+// NewDeltaContext instantiates 'DeltaContext' with the given name, pointer for getting/setting previous value and
+// optional warning/critical threshold ranges which get applied to the delta values.
+func NewDeltaContext(name string, previousValue *float64, warningRange *Range, criticalRange *Range) *DeltaContext {
+	return &DeltaContext{
+		ScalarContext: NewScalarContext(name, warningRange, criticalRange),
+
+		previousValue: previousValue,
+	}
+}
+
+// Evaluate calculates the delta between the current value of the given metric against the value stored in the pointer
+// which got passed when instantiating this context. The 'new' value of the metric gets automatically stored in this
+// pointer, before applying warning/threshold ranges (if available) on the calculated delta value.
+func (c *DeltaContext) Evaluate(metric Metric, resource Resource) Result {
+	numberMetric, ok := metric.(*NumericMetric)
+	if !ok {
+		return c.resultFactory(StateUnknown, metric, c, resource,
+			fmt.Sprintf("DeltaContext can not process metrics of type [%s]", reflect.TypeOf(metric)))
+	}
+
+	deltaMetric := NewNumericMetric(
+		numberMetric.Name()+"_delta",
+		numberMetric.Value()-*c.previousValue,
+		"", nil, numberMetric.ContextName(),
+	)
+	*c.previousValue = numberMetric.Value()
+
+	if c.criticalRange != nil && !c.criticalRange.Match(deltaMetric.Value()) {
+		return c.resultFactory(StateCritical, deltaMetric, c, resource, c.criticalRange.ViolationHint())
+	} else if c.warningRange != nil && !c.warningRange.Match(deltaMetric.Value()) {
+		return c.resultFactory(StateWarning, deltaMetric, c, resource, c.warningRange.ViolationHint())
+	} else {
+		return c.resultFactory(StateOk, deltaMetric, c, resource, "")
+	}
+}
+
+// Performance returns the performance data for the delta context without any ranges
+func (c *DeltaContext) Performance(metric Metric, resource Resource) *PerfData {
+	return &PerfData{
+		metric:        metric,
+		warningRange:  nil,
+		criticalRange: nil,
+	}
+}
+
+// NewStringMatchContext instantiates 'StringMatchContext' with the given name, a list of expected values and the
+// desired result state in case none of the expected values match.
+func NewStringMatchContext(name string, rawExpectedValues []string, problemState State) *StringMatchContext {
+	var expectedValues []string
+	for _, expectedValue := range rawExpectedValues {
+		expectedValues = append(expectedValues, strings.ToLower(expectedValue))
+	}
+
+	return &StringMatchContext{
+		BaseContext: NewContext(name, "%<name>s is %<value>s"),
+
+		problemState:   problemState,
+		expectedValues: expectedValues,
+	}
+}
+
+// Evaluate checks if the given metric matches one of the expected strings, which were passed when instantiating this
+// context. In case no expected strings were given, this method will always pass with the state "OK". Please note that
+// all checks are done case-insensitive. In case no match was found, the desired 'problemState' (also passed during
+// instantiation) gets returned instead.
+func (c *StringMatchContext) Evaluate(metric Metric, resource Resource) Result {
+	stringMetric, ok := metric.(*StringMetric)
+	if !ok {
+		return c.resultFactory(StateUnknown, metric, c, resource,
+			fmt.Sprintf("StringMatchContext can not process metrics of type [%s]", reflect.TypeOf(metric)))
+	}
+
+	if len(c.expectedValues) == 0 {
+		return c.resultFactory(StateOk, metric, c, resource, "")
+	}
+
+	value := strings.ToLower(stringMetric.Value())
+	for _, expectedValue := range c.expectedValues {
+		if value == expectedValue {
+			return c.resultFactory(StateOk, metric, c, resource, "")
+		}
+	}
+
+	return c.resultFactory(c.problemState, metric, c, resource,
+		fmt.Sprintf("got [%s], expected [%s]", value, strings.Join(c.expectedValues, "],[")))
 }
