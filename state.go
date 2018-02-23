@@ -24,6 +24,9 @@ type State struct {
 	Description string
 }
 
+// StateInfo represents additional check information without influencing the check result.
+var StateInfo = State{ExitCode: -1, Description: "info"}
+
 // StateOk represents an "OK" state with exit code 0.
 var StateOk = State{ExitCode: 0, Description: "ok"}
 

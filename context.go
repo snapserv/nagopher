@@ -20,12 +20,11 @@ package nagopher
 
 import (
 	"fmt"
+	"github.com/chonla/format"
 	"math"
 	"reflect"
 	"strconv"
 	"strings"
-
-	"github.com/chonla/format"
 )
 
 // Context represents a interface for all context types.
@@ -66,6 +65,12 @@ type StringMatchContext struct {
 
 	problemState   State
 	expectedValues []string
+}
+
+// StringInfoContext represents a context for string values which do not influence the check result but provide
+// additional information about the check execution.
+type StringInfoContext struct {
+	*BaseContext
 }
 
 // NewContext instantiates 'BaseContext' with a given name and format string.
@@ -254,4 +259,18 @@ func (c *StringMatchContext) Evaluate(metric Metric, resource Resource) Result {
 
 	return c.resultFactory(c.problemState, metric, c, resource,
 		fmt.Sprintf("got [%s], expected [%s]", value, strings.Join(c.expectedValues, "],[")))
+}
+
+// NewStringInfoContext instantiates 'StringInfoContext' with the given name. This context can be used to pass
+// additional information about a check when the user requests verbose plugin output.
+func NewStringInfoContext(name string) *StringInfoContext {
+	return &StringInfoContext{
+		BaseContext: NewContext(name, "%<value>s"),
+	}
+}
+
+// Evaluate returns a Result object for the given metric and resource. In case of 'StringInfoContext', the check result
+// will always return 'StateInfo', which ends up in verbose plugin output unlike 'StateOk'.
+func (c *StringInfoContext) Evaluate(metric Metric, resource Resource) Result {
+	return c.resultFactory(StateInfo, metric, c, resource, "")
 }
