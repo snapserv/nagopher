@@ -25,40 +25,40 @@ import (
 )
 
 func TestBaseSummary_Ok_ReturnsFirstResult(t *testing.T) {
-	results := NewResultCollection()
-	results.Add(
+	summary := NewBaseSummary()
+	check := NewCheck("check", summary)
+	check.Results().Add(
 		NewResult(StateOk, nil, nil, nil, "Result 1"),
 		NewResult(StateOk, nil, nil, nil, "Result 2"),
 	)
 
-	summary := NewBaseSummary()
-	assert.Equal(t, "Result 1", summary.Ok(results))
+	assert.Equal(t, "Result 1", summary.Ok(check))
 }
 
 func TestBaseSummary_Problem_ReturnsMostSignificant(t *testing.T) {
-	results := NewResultCollection()
-	results.Add(
+	summary := NewBaseSummary()
+	check := NewCheck("check", summary)
+	check.Results().Add(
 		NewResult(StateWarning, nil, nil, nil, "Result Warning"),
 		NewResult(StateOk, nil, nil, nil, "Result Ok"),
 		NewResult(StateCritical, nil, nil, nil, "Result Critical"),
 		NewResult(StateOk, nil, nil, nil, "Result Ok"),
 	)
 
-	summary := NewBaseSummary()
-	assert.Equal(t, "Result Critical", summary.Problem(results))
+	assert.Equal(t, "Result Critical", summary.Problem(check))
 }
 
 func TestBaseSummary_Verbose(t *testing.T) {
-	results := NewResultCollection()
-	results.Add(
+	summary := NewBaseSummary()
+	check := NewCheck("check", summary)
+	check.Results().Add(
 		NewResult(StateCritical, nil, nil, nil, "Reason 1"),
 		NewResult(StateWarning, nil, nil, nil, "Reason 2"),
 		NewResult(StateOk, nil, nil, nil, "Must be ignored"),
 	)
 
-	summary := NewBaseSummary()
 	expected := []string{"critical: Reason 1", "warning: Reason 2"}
-	assert.Equal(t, expected, summary.Verbose(results))
+	assert.Equal(t, expected, summary.Verbose(check))
 }
 
 func TestBaseSummary_Empty(t *testing.T) {
