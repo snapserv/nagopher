@@ -27,6 +27,7 @@ import (
 // Check represents a nagopher check containing all required objects for execution, evaluation and visualization.
 type Check struct {
 	name       string
+	meta       map[string]interface{}
 	resources  []Resource
 	contexts   map[string]Context
 	results    *ResultCollection
@@ -38,6 +39,7 @@ type Check struct {
 func NewCheck(name string, summarizer Summarizer) *Check {
 	return &Check{
 		name:       name,
+		meta:       make(map[string]interface{}),
 		contexts:   make(map[string]Context),
 		results:    NewResultCollection(),
 		summarizer: summarizer,
@@ -57,6 +59,23 @@ func (c *Check) Run(warnings *WarningCollection) {
 	})
 }
 
+// SetMeta sets the metadata for a given key to the passed value. These metadata methods can store any arbitrary type by
+// accepting 'interface{}' as their type. Please note that this methods should never be used directly within this API,
+// as the user is able to override any field without any further checks.
+func (c *Check) SetMeta(key string, value interface{}) {
+	c.meta[key] = value
+}
+
+// GetMeta returns the metadata for a given key or the passed default value in case the key does not exist. Please also
+// note the documentation about 'SetMeta' for further information about the metadata storage system.
+func (c *Check) GetMeta(key string, defaultValue interface{}) interface{} {
+	if value, ok := c.meta[key]; ok {
+		return value
+	}
+
+	return defaultValue
+}
+
 // AttachResources attaches one or more resources to the check.
 func (c *Check) AttachResources(resources ...Resource) {
 	c.resources = append(c.resources, resources...)
@@ -67,6 +86,11 @@ func (c *Check) AttachContexts(contexts ...Context) {
 	for _, context := range contexts {
 		c.contexts[context.Name()] = context
 	}
+}
+
+// Results represents a getter for the 'results' attribute.
+func (c *Check) Results() *ResultCollection {
+	return c.results
 }
 
 // GetState returns the most significant state based on current check results.
@@ -81,15 +105,15 @@ func (c *Check) GetSummary() string {
 	}
 
 	if c.GetState() == StateOk {
-		return c.summarizer.Ok(c.results)
+		return c.summarizer.Ok(c)
 	}
 
-	return c.summarizer.Problem(c.results)
+	return c.summarizer.Problem(c)
 }
 
 // GetVerboseSummary returns the verbose output of the checks summarizer.
 func (c *Check) GetVerboseSummary() []string {
-	return c.summarizer.Verbose(c.results)
+	return c.summarizer.Verbose(c)
 }
 
 // GetPerfData returns the currently available performance data.

@@ -24,9 +24,9 @@ import (
 
 // Summarizer represents a interface for all summary types.
 type Summarizer interface {
-	Ok(*ResultCollection) string
-	Problem(*ResultCollection) string
-	Verbose(*ResultCollection) []string
+	Ok(check *Check) string
+	Problem(check *Check) string
+	Verbose(check *Check) []string
 	Empty() string
 }
 
@@ -40,21 +40,21 @@ func NewBaseSummary() *BaseSummary {
 
 // Ok returns the string representation of the most-significant result, which is always the first element in a
 // 'ResultCollection' object. This method should be called if the global check state equals to 'StateOk'.
-func (s *BaseSummary) Ok(resultCollection *ResultCollection) string {
-	return resultCollection.Get()[0].String()
+func (s *BaseSummary) Ok(check *Check) string {
+	return check.Results().Get()[0].String()
 }
 
 // Problem returns the string representation of the most-significant result, which is always the first element in a
 // 'ResultCollection' object. This method should be called if the global check state does not equal to 'StateOk'.
-func (s *BaseSummary) Problem(resultCollection *ResultCollection) string {
-	return resultCollection.Get()[0].String()
+func (s *BaseSummary) Problem(check *Check) string {
+	return check.Results().Get()[0].String()
 }
 
 // Verbose returns the string representation of all results which do not have a state equal to 'StateOk'.
-func (s *BaseSummary) Verbose(resultCollection *ResultCollection) []string {
+func (s *BaseSummary) Verbose(check *Check) []string {
 	var messages []string
 
-	for _, result := range resultCollection.Get() {
+	for _, result := range check.Results().Get() {
 		if result.State() == StateOk {
 			continue
 		}
