@@ -64,11 +64,21 @@ func (rc *ResultCollection) Count() int {
 	return len(rc.results)
 }
 
+// MostSignificantResult returns the most significant result within the result collection. In case no results were
+// added, nil is being returned.
+func (rc *ResultCollection) MostSignificantResult() Result {
+	if len(rc.results) >= 1 {
+		return rc.results[0]
+	}
+
+	return nil
+}
+
 // MostSignificantState returns the most significant state within the result collection. In case no results were added,
 // 'StateUnknown' is being returned.
 func (rc *ResultCollection) MostSignificantState() State {
-	if len(rc.results) >= 1 {
-		return rc.results[0].State()
+	if result := rc.MostSignificantResult(); result != nil {
+		return result.State()
 	}
 
 	return StateUnknown
