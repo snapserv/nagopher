@@ -8,17 +8,13 @@ GOVERALLS_ARGS = -service=travis-ci
 all: lint test build
 
 .PHONY: build
-build: deps
+build:
 	$(GO) build
 
-.PHONY: deps
-deps:
-	$(GO) get -d -v -t ./...
-
 .PHONY: devel-deps
-devel-deps: deps
-	$(GO) get github.com/golang/lint/golint
-	$(GO) get github.com/mattn/goveralls
+devel-deps:
+	$(GO) get -u golang.org/x/lint/golint
+	$(GO) get -u github.com/mattn/goveralls
 
 .PHONY: lint
 lint: devel-deps
