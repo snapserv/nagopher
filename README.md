@@ -22,4 +22,4 @@ Work in progress.
 
 ## Copyright
 
-Copyright &copy; 2018  Pascal Mathis. All rights reserved.
+Copyright &copy; 2018-2019  Pascal Mathis. All rights reserved.
