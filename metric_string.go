@@ -18,34 +18,39 @@
 
 package nagopher
 
-import (
-	"github.com/stretchr/testify/assert"
-	"testing"
-)
+type StringMetric interface {
+	Metric
 
-func TestNewBaseMetric(t *testing.T) {
-	// given
-	expectedValueRange := NewBounds()
-
-	// when
-	metric, err := newBaseMetric("metric", "B", &expectedValueRange, "context")
-
-	// then
-	assert.NoError(t, err)
-	assert.Equal(t, "metric", metric.Name())
-	assert.Equal(t, "B", metric.ValueUnit())
-	assert.Equal(t, "context", metric.ContextName())
-
-	actualValueRange, err := metric.ValueRange().Get()
-	assert.NoError(t, err)
-	assert.Equal(t, expectedValueRange, actualValueRange)
+	Value() string
 }
 
-func TestBaseMetric_ContextName_Empty(t *testing.T) {
-	// when
-	metric, err := newBaseMetric("metric", "", nil, "")
+type stringMetric struct {
+	baseMetric
+	value string
+}
 
-	// then
-	assert.NoError(t, err)
-	assert.Equal(t, "metric", metric.ContextName())
+func NewStringMetric(name string, value string, context string) (StringMetric, error) {
+	baseMetric, err := newBaseMetric(name, "", nil, context)
+	if err != nil {
+		return nil, err
+	}
+
+	stringMetric := &stringMetric{
+		baseMetric: *baseMetric,
+		value:      value,
+	}
+
+	return stringMetric, nil
+}
+
+func (m stringMetric) ToNagiosValue() string {
+	return m.ValueString()
+}
+
+func (m stringMetric) Value() string {
+	return m.value
+}
+
+func (m stringMetric) ValueString() string {
+	return m.value
 }

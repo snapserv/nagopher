@@ -16,30 +16,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//go:generate optional -type=StateData
 package nagopher
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
-
-func TestCheck_AttachContexts(t *testing.T) {
-	context1 := NewContext("ctx1", "")
-	context2 := NewContext("ctx2", "")
-	check := NewCheck("check", NewBaseSummary())
-
-	check.AttachContexts(context1, context2)
-	assert.Equal(t, check.contexts["ctx1"], context1)
-	assert.Equal(t, check.contexts["ctx2"], context2)
+type StateData interface {
+	ExitCode() int8
+	Description() string
 }
 
-func TestCheck_AttachResources(t *testing.T) {
-	resource1 := NewResource()
-	resource2 := NewResource()
-	check := NewCheck("check", NewBaseSummary())
+type stateData struct {
+	exitCode    int8
+	description string
+}
 
-	check.AttachResources(resource1, resource2)
-	assert.Contains(t, check.resources, resource1)
-	assert.Contains(t, check.resources, resource2)
+func StateUnknown() StateData {
+	return stateData{exitCode: 3, description: "unknown"}
+}
+
+func StateCritical() StateData {
+	return stateData{exitCode: 2, description: "critical"}
+}
+
+func StateWarning() StateData {
+	return stateData{exitCode: 1, description: "warning"}
+}
+
+func StateOk() StateData {
+	return stateData{exitCode: 0, description: "ok"}
+}
+
+func (s stateData) ExitCode() int8 {
+	return s.exitCode
+}
+
+func (s stateData) Description() string {
+	return s.description
 }

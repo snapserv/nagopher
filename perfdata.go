@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//go:generate optional -type=PerfData
 package nagopher
 
 import (
@@ -24,82 +25,76 @@ import (
 	"strings"
 )
 
-// PerfData represents performance data based on a Metric object and threshold ranges
-type PerfData struct {
-	metric        Metric
-	warningRange  *Range
-	criticalRange *Range
+type PerfData interface {
+	ToNagiosPerfData() string
+	Metric() Metric
 }
 
-// NewPerfData instantiates 'PerfData' with a given name, value, unit, range and threshold ranges. The name must not
-// contain any of these illegal characters: = (equal) ' (single quote)
-func NewPerfData(name string, value float64, valueUnit string, valueRange *Range,
-	warningRange *Range, criticalRange *Range) (*PerfData, error) {
-	if strings.ContainsAny(name, "'=") {
-		return nil, fmt.Errorf("nagopher: perfdata name [%s] contains invalid characters", name)
+type perfData struct {
+	metric            Metric
+	warningThreshold  OptionalBounds
+	criticalThreshold OptionalBounds
+}
+
+const illegalNameChars = "'="
+
+func NewPerfData(metric Metric, warningThreshold *Bounds, criticalThreshold *Bounds) (PerfData, error) {
+	if strings.ContainsAny(metric.Name(), illegalNameChars) {
+		return nil, fmt.Errorf("perfdata metric name [%s] contains invalid characters", metric.Name())
 	}
 
-	return &PerfData{
-		metric:        NewNumericMetric(name, value, valueUnit, valueRange, "perfdata"),
-		warningRange:  warningRange,
-		criticalRange: criticalRange,
-	}, nil
+	perfData := &perfData{
+		metric: metric,
+	}
+
+	if warningThreshold != nil {
+		perfData.warningThreshold = NewOptionalBounds(*warningThreshold)
+	}
+	if criticalThreshold != nil {
+		perfData.criticalThreshold = NewOptionalBounds(*criticalThreshold)
+	}
+
+	return perfData, nil
 }
 
-// BuildOutput returns a string according to the Nagios plugin specifications in the format:
-// '<name>=<value>[;<warningRange>][;<criticalRange>][;<minimum>][;<maximum>]
-func (pd *PerfData) BuildOutput() (string, error) {
-	quotedName, err := pd.quoteString(pd.metric.Name())
+func NewNumericPerfData(name string, value float64, valueUnit string, valueRange *Bounds,
+	warningThreshold *Bounds, criticalThreshold *Bounds) (PerfData, error) {
+	numericMetric, err := NewNumericMetric(name, value, valueUnit, valueRange, "perfdata")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	output := []string{fmt.Sprintf(
-		"%s=%s",
-		quotedName,
-		pd.metric.ValueUnit(),
-	)}
-
-	if pd.warningRange != nil {
-		output = append(output, pd.warningRange.String())
-	} else {
-		output = append(output, "")
-	}
-
-	if pd.criticalRange != nil {
-		output = append(output, pd.criticalRange.String())
-	} else {
-		output = append(output, "")
-	}
-
-	if valueRange := pd.metric.ValueRange(); valueRange != nil {
-		if start := valueRange.Start(); start != "" {
-			output = append(output, start)
-		} else {
-			output = append(output, "")
-		}
-
-		if end := valueRange.End(); end != "" {
-			output = append(output, end)
-		} else {
-			output = append(output, "")
-		}
-	} else {
-		output = append(output, "", "")
-	}
-
-	return strings.TrimRight(strings.Join(output, ";"), ";"), nil
+	return NewPerfData(numericMetric, warningThreshold, criticalThreshold)
 }
 
-func (pd *PerfData) quoteString(value string) (string, error) {
-	match, err := regexp.MatchString("^\\w+$", value)
-	if err != nil {
-		return "", fmt.Errorf("nagopher: unexpected regexp error (%s)", err.Error())
-	}
+func (pd perfData) ToNagiosPerfData() string {
+	quotedName := pd.quoteString(pd.metric.Name())
+	emptyBounds := NewBounds()
 
+	valueRange := pd.metric.ValueRange().OrElse(emptyBounds)
+	valueRangeParts := strings.Split(valueRange.ToNagiosRange(), ":")
+	warningThreshold := pd.warningThreshold.OrElse(emptyBounds)
+	criticalThreshold := pd.criticalThreshold.OrElse(emptyBounds)
+
+	outputValues := append([]string{
+		fmt.Sprintf("%s=%s", quotedName, pd.metric.ToNagiosValue()),
+		warningThreshold.ToNagiosRange(),
+		criticalThreshold.ToNagiosRange(),
+	}, valueRangeParts...)
+
+	output := strings.TrimRight(strings.Join(outputValues, ";"), ";")
+	return output
+}
+
+func (pd perfData) Metric() Metric {
+	return pd.metric
+}
+
+func (pd perfData) quoteString(value string) string {
+	match := regexp.MustCompile("^\\w+$").MatchString(value)
 	if match {
-		return value, nil
+		return value
 	}
 
-	return fmt.Sprintf("'%s'", value), nil
+	return fmt.Sprintf("'%s'", value)
 }

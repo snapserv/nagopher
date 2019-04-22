@@ -24,104 +24,60 @@ import (
 	"sort"
 )
 
-// Check represents a nagopher check containing all required objects for execution, evaluation and visualization.
-type Check struct {
-	name       string
-	meta       map[string]interface{}
-	resources  []Resource
-	contexts   map[string]Context
-	results    *ResultCollection
-	perfData   []*PerfData
-	summarizer Summarizer
+type Check interface {
+	Run(warnings WarningCollection)
+	SetMeta(key string, value interface{})
+	GetMeta(key string, defaultValue interface{}) interface{}
+	AttachResources(resources ...Resource)
+	AttachContexts(contexts ...Context)
+
+	Name() string
+	PerfData() []PerfData
+	Results() Collection
+	State() StateData
+	Summary() string
+	VerboseSummary() []string
 }
 
-// NewCheck instantiates 'Check' with a given name and summarizer.
-func NewCheck(name string, summarizer Summarizer) *Check {
-	return &Check{
+type baseCheck struct {
+	name         string
+	meta         map[string]interface{}
+	contexts     map[string]Context
+	resources    []Resource
+	performances []PerfData
+	results      Collection
+	summarizer   Summarizer
+}
+
+func NewCheck(name string, summarizer Summarizer) Check {
+	check := &baseCheck{
 		name:       name,
+		summarizer: summarizer,
 		meta:       make(map[string]interface{}),
 		contexts:   make(map[string]Context),
 		results:    NewResultCollection(),
-		summarizer: summarizer,
 	}
+
+	return check
 }
 
-// Run executes all probes of the attached resources and collects their results including performance data.
-func (c *Check) Run(warnings *WarningCollection) {
+func (c *baseCheck) Run(warnings WarningCollection) {
 	for _, resource := range c.resources {
-		if err := c.evaluateResource(warnings, resource); err != nil {
-			c.results.Add(NewResult(StateUnknown, nil, nil, resource, err.Error()))
+		err := c.evaluateResource(warnings, resource)
+		if err != nil {
+			c.results.Add(NewResult(
+				ResultState(StateUnknown()),
+				ResultResource(resource), ResultHint(err.Error()),
+			))
 		}
 	}
 
-	sort.Slice(c.perfData, func(i int, j int) bool {
-		return c.perfData[i].metric.Name() < c.perfData[j].metric.Name()
+	sort.SliceStable(c.performances, func(a int, b int) bool {
+		return c.performances[a].Metric().Name() < c.performances[b].Metric().Name()
 	})
 }
 
-// SetMeta sets the metadata for a given key to the passed value. These metadata methods can store any arbitrary type by
-// accepting 'interface{}' as their type. Please note that this methods should never be used directly within this API,
-// as the user is able to override any field without any further checks.
-func (c *Check) SetMeta(key string, value interface{}) {
-	c.meta[key] = value
-}
-
-// GetMeta returns the metadata for a given key or the passed default value in case the key does not exist. Please also
-// note the documentation about 'SetMeta' for further information about the metadata storage system.
-func (c *Check) GetMeta(key string, defaultValue interface{}) interface{} {
-	if value, ok := c.meta[key]; ok {
-		return value
-	}
-
-	return defaultValue
-}
-
-// AttachResources attaches one or more resources to the check.
-func (c *Check) AttachResources(resources ...Resource) {
-	c.resources = append(c.resources, resources...)
-}
-
-// AttachContexts attaches one or more contexts to the check.
-func (c *Check) AttachContexts(contexts ...Context) {
-	for _, context := range contexts {
-		c.contexts[context.Name()] = context
-	}
-}
-
-// Results represents a getter for the 'results' attribute.
-func (c *Check) Results() *ResultCollection {
-	return c.results
-}
-
-// GetState returns the most significant state based on current check results.
-func (c *Check) GetState() State {
-	return c.results.MostSignificantState()
-}
-
-// GetSummary returns the output of the checks summarizer.
-func (c *Check) GetSummary() string {
-	if c.results.Count() == 0 {
-		return c.summarizer.Empty()
-	}
-
-	if c.GetState() == StateOk {
-		return c.summarizer.Ok(c)
-	}
-
-	return c.summarizer.Problem(c)
-}
-
-// GetVerboseSummary returns the verbose output of the checks summarizer.
-func (c *Check) GetVerboseSummary() []string {
-	return c.summarizer.Verbose(c)
-}
-
-// GetPerfData returns the currently available performance data.
-func (c *Check) GetPerfData() []*PerfData {
-	return c.perfData
-}
-
-func (c *Check) evaluateResource(warnings *WarningCollection, resource Resource) error {
+func (c *baseCheck) evaluateResource(warnings WarningCollection, resource Resource) error {
 	metrics, err := resource.Probe(warnings)
 	if err != nil {
 		return err
@@ -137,12 +93,75 @@ func (c *Check) evaluateResource(warnings *WarningCollection, resource Resource)
 		}
 
 		result := context.Evaluate(metric, resource)
-		if perfData := context.Performance(metric, resource); perfData != nil {
-			c.perfData = append(c.perfData, perfData)
-		}
-
 		c.results.Add(result)
+
+		perfData, err := context.Performance(metric, resource)
+		if err != nil {
+			return fmt.Errorf("nagopher: collecting performance data failed with [%s]", err.Error())
+		}
+		if performance, err := perfData.Get(); err == nil {
+			c.performances = append(c.performances, performance)
+		}
 	}
 
 	return nil
+}
+
+func (c *baseCheck) SetMeta(key string, value interface{}) {
+	c.meta[key] = value
+}
+
+func (c baseCheck) GetMeta(key string, defaultValue interface{}) interface{} {
+	if value, ok := c.meta[key]; ok {
+		return value
+	}
+
+	return defaultValue
+}
+
+func (c *baseCheck) AttachResources(resources ...Resource) {
+	c.resources = append(c.resources, resources...)
+}
+
+func (c *baseCheck) AttachContexts(contexts ...Context) {
+	for _, context := range contexts {
+		c.contexts[context.Name()] = context
+	}
+}
+
+func (c baseCheck) Results() Collection {
+	return c.results
+}
+
+func (c baseCheck) State() StateData {
+	state, err := c.results.MostSignificantState().Get()
+	if err == nil {
+		return state
+	}
+
+	return StateUnknown()
+}
+
+func (c baseCheck) Summary() string {
+	if c.results.Count() == 0 {
+		return c.summarizer.Empty()
+	}
+
+	if c.State() == StateOk() {
+		return c.summarizer.Ok(&c)
+	}
+
+	return c.summarizer.Problem(&c)
+}
+
+func (c baseCheck) VerboseSummary() []string {
+	return c.summarizer.Verbose(&c)
+}
+
+func (c baseCheck) Name() string {
+	return c.name
+}
+
+func (c baseCheck) PerfData() []PerfData {
+	return c.performances
 }

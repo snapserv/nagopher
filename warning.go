@@ -18,45 +18,56 @@
 
 package nagopher
 
-// Warning represents a interface for all warning types.
+import "fmt"
+
 type Warning interface {
 	Warning() string
 }
 
-// WarningCollection represents a collection of 0-n warnings.
-type WarningCollection struct {
+type baseWarning struct {
+	message string
+}
+
+func NewWarning(format string, values ...interface{}) Warning {
+	warning := &baseWarning{
+		message: fmt.Sprintf(format, values...),
+	}
+
+	return warning
+}
+
+func (w baseWarning) Warning() string {
+	return w.message
+}
+
+type WarningCollection interface {
+	Add(warnings ...Warning)
+	Get() []Warning
+	GetWarningStrings() []string
+}
+
+type warningCollection struct {
 	warnings []Warning
 }
 
-// NewWarning instantiates 'Warning' with the given text.
-func NewWarning(text string) Warning {
-	return &warningString{text}
+func NewWarningCollection() WarningCollection {
+	return &warningCollection{}
 }
 
-// NewWarningCollection instantiates 'WarningCollection', which by default is empty.
-func NewWarningCollection() *WarningCollection {
-	return &WarningCollection{}
+func (wc warningCollection) Add(warnings ...Warning) {
+	wc.warnings = append(wc.warnings, warnings...)
 }
 
-// Add adds one or more 'Warning' objects to the collection.
-func (c *WarningCollection) Add(warnings ...Warning) {
-	c.warnings = append(c.warnings, warnings...)
+func (wc warningCollection) Get() []Warning {
+	return wc.warnings
 }
 
-// GetStrings returns a list containing the string representation of all stored 'Warning' objects.
-func (c *WarningCollection) GetStrings() []string {
+func (wc warningCollection) GetWarningStrings() []string {
 	var results []string
-	for _, warning := range c.warnings {
+
+	for _, warning := range wc.warnings {
 		results = append(results, warning.Warning())
 	}
 
 	return results
-}
-
-type warningString struct {
-	s string
-}
-
-func (w *warningString) Warning() string {
-	return w.s
 }

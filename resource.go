@@ -16,25 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//go:generate optional -type=Resource
 package nagopher
 
-// Resource represents a interface for all resource types.
 type Resource interface {
-	Probe(warnings *WarningCollection) ([]Metric, error)
+	Probe(WarningCollection) ([]Metric, error)
 }
 
-// BaseResource represents a generic context from which all other resource types should originate.
-type BaseResource struct{}
+type baseResource struct{}
 
-// NewResource instantiates 'BaseResource'.
-func NewResource() *BaseResource {
-	return &BaseResource{}
+func NewResource() Resource {
+	return &baseResource{}
 }
 
-// Probe executes all the required check logic and returns one or more 'Metric' objects. Warnings can be passed through
-// the provided WarningCollection variable which gets passed. In case any of the check logic fail, the error should be
-// returned without panicking. The base resource does not execute any check logic and defaults to returning an empty
-// Metric slice without an error.
-func (r *BaseResource) Probe(warnings *WarningCollection) ([]Metric, error) {
+func (r baseResource) Probe(warnings WarningCollection) ([]Metric, error) {
 	return []Metric{}, nil
 }

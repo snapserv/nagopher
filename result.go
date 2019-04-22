@@ -16,156 +16,116 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//go:generate optional -type=Result
 package nagopher
 
 import (
 	"fmt"
-	"sort"
 )
 
-// ResultCollection represents a struct holding 0-n 'Result' objects always guaranteeing to return the collected results
-// ordered by the significance of the result states.
-type ResultCollection struct {
-	results []Result
+type Result interface {
+	fmt.Stringer
+
+	Hint() string
+	State() OptionalStateData
+	Metric() OptionalMetric
+	Context() OptionalContext
+	Resource() OptionalResource
 }
 
-// NewResultCollection instantiates 'ResultCollection', which is by default empty.
-func NewResultCollection() *ResultCollection {
-	return &ResultCollection{}
+type result struct {
+	hint     string
+	state    OptionalStateData
+	metric   OptionalMetric
+	context  OptionalContext
+	resource OptionalResource
+}
+type resultOpt func(*result)
+
+func NewResult(options ...resultOpt) Result {
+	result := &result{}
+
+	for _, option := range options {
+		option(result)
+	}
+
+	return result
 }
 
-// Add adds one or more results to the collection and sorts the available results afterwards. In case you want to add a
-// lot of results simultaneously, you should only call this method once to avoid unnecessary sorting in between.
-func (rc *ResultCollection) Add(results ...Result) {
-	rc.results = append(rc.results, results...)
-	rc.sort()
+func ResultHint(value string) resultOpt {
+	return func(r *result) {
+		r.hint = value
+	}
 }
 
-// Get returns all collected results, being effectively a getter for the 'results' attribute.
-func (rc *ResultCollection) Get() []Result {
-	return rc.results
-}
-
-// GetByMetricName tries to find a result where the associated metric has the given name. Returns nil if no metric could
-// be found in the current result collection.
-func (rc *ResultCollection) GetByMetricName(name string) Result {
-	for _, result := range rc.results {
-		metric := result.Metric()
-		if metric != nil && metric.Name() == name {
-			return result
+func ResultState(value StateData) resultOpt {
+	return func(r *result) {
+		if value != nil {
+			r.state = NewOptionalStateData(value)
 		}
 	}
-
-	return nil
 }
 
-// Count is a helper method which returns the current amount of results.
-func (rc *ResultCollection) Count() int {
-	return len(rc.results)
-}
-
-// MostSignificantResult returns the most significant result within the result collection. In case no results were
-// added, nil is being returned.
-func (rc *ResultCollection) MostSignificantResult() Result {
-	if len(rc.results) >= 1 {
-		return rc.results[0]
-	}
-
-	return nil
-}
-
-// MostSignificantState returns the most significant state within the result collection. In case no results were added,
-// 'StateUnknown' is being returned.
-func (rc *ResultCollection) MostSignificantState() State {
-	if result := rc.MostSignificantResult(); result != nil {
-		return result.State()
-	}
-
-	return StateUnknown
-}
-
-func (rc *ResultCollection) sort() {
-	sort.Slice(rc.results, func(i, j int) bool {
-		return rc.results[i].State().ExitCode > rc.results[j].State().ExitCode
-	})
-}
-
-// ResultFactory represents a generic function declaration for instantiating 'Result' objects, which can be used to
-// override which result type is being used within a 'Context' object.
-type ResultFactory func(state State, metric Metric, context Context, resource Resource, hint string) Result
-
-// Result represents a interface for all result types
-type Result interface {
-	String() string
-	State() State
-	Metric() Metric
-	Hint() string
-}
-
-// BaseResult represents a generic context from which all other result types should originate.
-type BaseResult struct {
-	Result
-	state    State
-	hint     string
-	metric   Metric
-	context  Context
-	resource Resource
-}
-
-// NewResult instantiates 'BaseResult' with the given state, metric, context, resource and hint.
-func NewResult(state State, metric Metric, context Context, resource Resource, hint string) *BaseResult {
-	return &BaseResult{
-		state:    state,
-		hint:     hint,
-		context:  context,
-		resource: resource,
-		metric:   metric,
+func ResultMetric(value Metric) resultOpt {
+	return func(r *result) {
+		if value != nil {
+			r.metric = NewOptionalMetric(value)
+		}
 	}
 }
 
-// NewResultFactory returns an anonymous function for instantiating a new 'BaseResult'. This is being used by 'Context'
-// objects as a generic interface for creating results, which can be backed by various result types.
-func NewResultFactory() ResultFactory {
-	return func(state State, metric Metric, context Context, resource Resource, hint string) Result {
-		return NewResult(state, metric, context, resource, hint)
+func ResultContext(value Context) resultOpt {
+	return func(r *result) {
+		if value != nil {
+			r.context = NewOptionalContext(value)
+		}
 	}
 }
 
-// String returns a readable string for the currently available result values, including both the description (context
-// if available, falling back to string representation of metric) and hint if available. In case no values are
-// available, an empty string will be returned.
-func (r *BaseResult) String() string {
+func ResultResource(value Resource) resultOpt {
+	return func(r *result) {
+		if value != nil {
+			r.resource = NewOptionalResource(value)
+		}
+	}
+}
+
+func (r result) String() string {
 	var description string
 
-	if r.context != nil {
-		description = r.context.Describe(r.metric)
-	}
-	if description == "" && r.metric != nil {
-		description = r.metric.String()
+	if metric, err := r.metric.Get(); err == nil {
+		if context, err := r.context.Get(); err == nil {
+			description = context.Describe(metric)
+		} else {
+			description = metric.ToNagiosValue()
+		}
 	}
 
 	if r.hint != "" && description != "" {
 		return fmt.Sprintf("%s (%s)", description, r.hint)
 	} else if r.hint != "" {
 		return r.hint
-	} else if description != "" {
-		return description
 	}
 
-	return ""
+	return description
 }
 
-// State represents a getter for the 'state' attribute.
-func (r *BaseResult) State() State {
+func (r result) Hint() string {
+	return r.hint
+}
+
+func (r result) State() OptionalStateData {
 	return r.state
 }
 
-// Metric represents a getter for the 'metric' attribute.
-func (r *BaseResult) Metric() Metric {
+func (r result) Metric() OptionalMetric {
 	return r.metric
 }
 
-// Hint represents a getter for the 'hint' attribute.
-func (r *BaseResult) Hint() string {
-	return r.hint
+func (r result) Context() OptionalContext {
+	return r.context
+}
+
+func (r result) Resource() OptionalResource {
+	return r.resource
 }
