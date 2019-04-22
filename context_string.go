@@ -31,10 +31,11 @@ type stringInfoContext struct {
 type stringMatchContext struct {
 	baseContext
 
-	problemState   StateData
+	problemState   State
 	expectedValues []string
 }
 
+// NewStringInfoContext instantiates a Context which only holds and returns a plain string without any further logic.
 func NewStringInfoContext(name string) Context {
 	stringInfoContext := &stringInfoContext{
 		baseContext: *newBaseContext(name, "%<value>s"),
@@ -50,7 +51,9 @@ func (c stringInfoContext) Evaluate(metric Metric, resource Resource) Result {
 	)
 }
 
-func NewStringMatchContext(name string, problemState StateData, expectedValues []string) Context {
+// NewStringMatchContext instantiates a Context which holds a string, which is being compared to a whitelist of
+// acceptable values during the evaluation phase. Should the value not be accepted, a problem state gets returned.
+func NewStringMatchContext(name string, problemState State, expectedValues []string) Context {
 	stringContext := &stringMatchContext{
 		baseContext: *newBaseContext(name, "%<name>s is %<value>s%<unit>s"),
 

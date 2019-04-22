@@ -20,36 +20,38 @@ package nagopher
 
 import "sort"
 
-type Collection interface {
+// ResultCollection contains an arbitrary amount of Result instances and methods to sort them by relevance
+type ResultCollection interface {
 	Add(results ...Result)
 	Get() []Result
 	Count() int
 	MostSignificantResult() OptionalResult
-	MostSignificantState() OptionalStateData
+	MostSignificantState() OptionalState
 }
 
-type collection struct {
+type resultCollection struct {
 	results []Result
 }
 
-func NewResultCollection() Collection {
-	return &collection{}
+// NewResultCollection instantiates a new ResultCollection object without any items
+func NewResultCollection() ResultCollection {
+	return &resultCollection{}
 }
 
-func (c *collection) Add(results ...Result) {
+func (c *resultCollection) Add(results ...Result) {
 	c.results = append(c.results, results...)
 	c.sort()
 }
 
-func (c collection) Get() []Result {
+func (c resultCollection) Get() []Result {
 	return c.results
 }
 
-func (c collection) Count() int {
+func (c resultCollection) Count() int {
 	return len(c.results)
 }
 
-func (c collection) MostSignificantResult() OptionalResult {
+func (c resultCollection) MostSignificantResult() OptionalResult {
 	if len(c.results) >= 1 {
 		return NewOptionalResult(c.results[0])
 	}
@@ -57,16 +59,16 @@ func (c collection) MostSignificantResult() OptionalResult {
 	return OptionalResult{}
 }
 
-func (c collection) MostSignificantState() OptionalStateData {
+func (c resultCollection) MostSignificantState() OptionalState {
 	mostSignificantResult := c.MostSignificantResult()
 	if result, err := mostSignificantResult.Get(); err == nil {
 		return result.State()
 	}
 
-	return OptionalStateData{}
+	return OptionalState{}
 }
 
-func (c *collection) sort() {
+func (c *resultCollection) sort() {
 	sort.SliceStable(c.results, func(a int, b int) bool {
 		stateA, errA := c.results[a].State().Get()
 		stateB, errB := c.results[b].State().Get()

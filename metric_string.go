@@ -18,6 +18,7 @@
 
 package nagopher
 
+// StringMetric represents a Metric storing string values
 type StringMetric interface {
 	Metric
 
@@ -29,6 +30,7 @@ type stringMetric struct {
 	value string
 }
 
+// NewStringMetric instantiates a new StringMetric with the given parameters.
 func NewStringMetric(name string, value string, context string) (StringMetric, error) {
 	baseMetric, err := newBaseMetric(name, "", nil, context)
 	if err != nil {

@@ -64,7 +64,7 @@ func TestNewBounds_NagiosRange(t *testing.T) {
 
 	// when
 	parsedRanges := make(map[string]Bounds)
-	for specifier, _ := range expectedRanges {
+	for specifier := range expectedRanges {
 		Bounds, err := FromNagiosRange(specifier)
 		assert.NoError(t, err)
 
@@ -98,7 +98,7 @@ func TestBounds_NagiosRange(t *testing.T) {
 
 	// when
 	describedRanges := make(map[string]string)
-	for specifier, _ := range expectedRanges {
+	for specifier := range expectedRanges {
 		Bounds, err := FromNagiosRange(specifier)
 		assert.NoError(t, err)
 

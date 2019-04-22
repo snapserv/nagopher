@@ -24,6 +24,7 @@ import (
 	"strconv"
 )
 
+// NumericMetric represents a Metric storing float64 values
 type NumericMetric interface {
 	Metric
 
@@ -35,6 +36,7 @@ type numericMetric struct {
 	value float64
 }
 
+// NewNumericMetric instantiates a new NumericMetric with the given parameters.
 func NewNumericMetric(name string, value float64, valueUnit string, valueRange *Bounds, contextName string) (NumericMetric, error) {
 	baseMetric, err := newBaseMetric(name, valueUnit, valueRange, contextName)
 	if err != nil {

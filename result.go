@@ -16,33 +16,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//go:generate optional -type=Result
 package nagopher
+
+//go:generate optional -type=Result
 
 import (
 	"fmt"
 )
 
+// Result represents the output of a context, after the evaluation of an associated metric
 type Result interface {
 	fmt.Stringer
 
 	Hint() string
-	State() OptionalStateData
+	State() OptionalState
 	Metric() OptionalMetric
 	Context() OptionalContext
 	Resource() OptionalResource
 }
 
+// ResultOpt is a type alias for functional options used by NewResult()
+type ResultOpt func(*result)
+
 type result struct {
 	hint     string
-	state    OptionalStateData
+	state    OptionalState
 	metric   OptionalMetric
 	context  OptionalContext
 	resource OptionalResource
 }
-type resultOpt func(*result)
 
-func NewResult(options ...resultOpt) Result {
+// NewResult instantiates a new Result with the given functional options
+func NewResult(options ...ResultOpt) Result {
 	result := &result{}
 
 	for _, option := range options {
@@ -52,21 +57,24 @@ func NewResult(options ...resultOpt) Result {
 	return result
 }
 
-func ResultHint(value string) resultOpt {
+// ResultHint is a functional option for NewResult(), which stores the hint of the result
+func ResultHint(value string) ResultOpt {
 	return func(r *result) {
 		r.hint = value
 	}
 }
 
-func ResultState(value StateData) resultOpt {
+// ResultState is a functional option for NewResult(), which stores the state of the result
+func ResultState(value State) ResultOpt {
 	return func(r *result) {
 		if value != nil {
-			r.state = NewOptionalStateData(value)
+			r.state = NewOptionalState(value)
 		}
 	}
 }
 
-func ResultMetric(value Metric) resultOpt {
+// ResultMetric is a functional option for NewResult(), which stores the responsible metric of the result
+func ResultMetric(value Metric) ResultOpt {
 	return func(r *result) {
 		if value != nil {
 			r.metric = NewOptionalMetric(value)
@@ -74,7 +82,8 @@ func ResultMetric(value Metric) resultOpt {
 	}
 }
 
-func ResultContext(value Context) resultOpt {
+// ResultContext is a functional option for NewResult(), which stores the responsible context of the result
+func ResultContext(value Context) ResultOpt {
 	return func(r *result) {
 		if value != nil {
 			r.context = NewOptionalContext(value)
@@ -82,7 +91,8 @@ func ResultContext(value Context) resultOpt {
 	}
 }
 
-func ResultResource(value Resource) resultOpt {
+// ResultResource is a functional option for NewResult(), which stores the responsible resource of the result
+func ResultResource(value Resource) ResultOpt {
 	return func(r *result) {
 		if value != nil {
 			r.resource = NewOptionalResource(value)
@@ -114,7 +124,7 @@ func (r result) Hint() string {
 	return r.hint
 }
 
-func (r result) State() OptionalStateData {
+func (r result) State() OptionalState {
 	return r.state
 }
 

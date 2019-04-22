@@ -16,13 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//go:generate optional -type=Context
 package nagopher
+
+//go:generate optional -type=Context
 
 import (
 	"github.com/chonla/format"
 )
 
+// Context provides methods for further processing a metric to generate results and/or performance data
 type Context interface {
 	Name() string
 	Describe(Metric) string

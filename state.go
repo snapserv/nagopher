@@ -16,39 +16,45 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//go:generate optional -type=StateData
 package nagopher
 
-type StateData interface {
+//go:generate optional -type=State
+
+// State represents a Nagios plugin state, which consists of an exit code and description
+type State interface {
 	ExitCode() int8
 	Description() string
 }
 
-type stateData struct {
+type state struct {
 	exitCode    int8
 	description string
 }
 
-func StateUnknown() StateData {
-	return stateData{exitCode: 3, description: "unknown"}
+// StateUnknown returns an "UNKNOWN" state according to Nagios plugin standards
+func StateUnknown() State {
+	return state{exitCode: 3, description: "unknown"}
 }
 
-func StateCritical() StateData {
-	return stateData{exitCode: 2, description: "critical"}
+// StateCritical returns an "CRITICAL" state according to Nagios plugin standards
+func StateCritical() State {
+	return state{exitCode: 2, description: "critical"}
 }
 
-func StateWarning() StateData {
-	return stateData{exitCode: 1, description: "warning"}
+// StateWarning returns an "WARNING" state according to Nagios plugin standards
+func StateWarning() State {
+	return state{exitCode: 1, description: "warning"}
 }
 
-func StateOk() StateData {
-	return stateData{exitCode: 0, description: "ok"}
+// StateOk returns an "OK" state according to Nagios plugin standards
+func StateOk() State {
+	return state{exitCode: 0, description: "ok"}
 }
 
-func (s stateData) ExitCode() int8 {
+func (s state) ExitCode() int8 {
 	return s.exitCode
 }
 
-func (s stateData) Description() string {
+func (s state) Description() string {
 	return s.description
 }

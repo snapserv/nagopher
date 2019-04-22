@@ -9,7 +9,7 @@ all: lint test build
 
 .PHONY: generate
 generate:
-    $(GO) generate
+	$(GO) generate
 
 .PHONY: build
 build:

@@ -16,15 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//go:generate optional -type=Resource
 package nagopher
 
+//go:generate optional -type=Resource
+
+// Resource offers a method for collecting one or more metrics
 type Resource interface {
 	Probe(WarningCollection) ([]Metric, error)
 }
 
 type baseResource struct{}
 
+// NewResource instantiates a new Resource.
 func NewResource() Resource {
 	return &baseResource{}
 }

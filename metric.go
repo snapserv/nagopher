@@ -16,14 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//go:generate optional -type=Metric
 package nagopher
+
+//go:generate optional -type=Metric
 
 import (
 	"errors"
 	"github.com/markphelps/optional"
 )
 
+// Metric stores a value of a given type associated to a specific context, optionally restrained into a specific range.
+// It can be converted to the according representation of that value in context of Nagios plugins.
 type Metric interface {
 	ToNagiosValue() string
 

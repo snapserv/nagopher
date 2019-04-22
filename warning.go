@@ -20,6 +20,7 @@ package nagopher
 
 import "fmt"
 
+// Warning represents a single warning cont
 type Warning interface {
 	Warning() string
 }
@@ -28,6 +29,8 @@ type baseWarning struct {
 	message string
 }
 
+// NewWarning instantiates a new warning, passing the format string and an arbitrary amount of arguments to
+// fmt.Sprintf() for building the string.
 func NewWarning(format string, values ...interface{}) Warning {
 	warning := &baseWarning{
 		message: fmt.Sprintf(format, values...),
@@ -40,6 +43,7 @@ func (w baseWarning) Warning() string {
 	return w.message
 }
 
+// WarningCollection collects an arbitrary amount of warnings, which can happen during runtime execution.
 type WarningCollection interface {
 	Add(warnings ...Warning)
 	Get() []Warning
@@ -50,6 +54,7 @@ type warningCollection struct {
 	warnings []Warning
 }
 
+// NewWarningCollection instantiates a new WarningCollection without any items.
 func NewWarningCollection() WarningCollection {
 	return &warningCollection{}
 }

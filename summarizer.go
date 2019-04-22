@@ -22,6 +22,7 @@ import (
 	"fmt"
 )
 
+// Summarizer provides methods for displaying a human-readable
 type Summarizer interface {
 	Ok(Check) string
 	Problem(Check) string
@@ -31,7 +32,8 @@ type Summarizer interface {
 
 type baseSummarizer struct{}
 
-func NewSummarizer() *baseSummarizer {
+// NewSummarizer instantiates a new Summarizer.
+func NewSummarizer() Summarizer {
 	return &baseSummarizer{}
 }
 

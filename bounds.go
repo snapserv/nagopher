@@ -16,8 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//go:generate optional -type=Bounds
 package nagopher
+
+//go:generate optional -type=Bounds
 
 import (
 	"errors"
@@ -28,6 +29,7 @@ import (
 	"strings"
 )
 
+// Bounds support matching float64 numbers against a given range, optionally inverting the result
 type Bounds interface {
 	fmt.Stringer
 
@@ -39,14 +41,17 @@ type Bounds interface {
 	Upper() optional.Float64
 }
 
+// BoundsOpt is a type alias for functional options used by NewBounds()
+type BoundsOpt func(*bounds)
+
 type bounds struct {
 	inverted   bool
 	lowerBound optional.Float64
 	upperBound optional.Float64
 }
-type boundsOpt func(*bounds)
 
-func NewBounds(options ...boundsOpt) Bounds {
+// NewBounds instantiates Bounds with the given functional options
+func NewBounds(options ...BoundsOpt) Bounds {
 	threshold := &bounds{
 		inverted: false,
 	}
@@ -58,6 +63,7 @@ func NewBounds(options ...boundsOpt) Bounds {
 	return threshold
 }
 
+// FromNagiosRange is a helper method, which constructs a new Bounds object from a Nagios range specifier
 func FromNagiosRange(specifier string) (Bounds, error) {
 	options, err := NagiosRange(specifier)
 	if err != nil {
@@ -67,8 +73,9 @@ func FromNagiosRange(specifier string) (Bounds, error) {
 	return NewBounds(options...), nil
 }
 
-func NagiosRange(specifier string) ([]boundsOpt, error) {
-	var options []boundsOpt
+// NagiosRange is a functional option for NewBounds(), which parses a Nagios range specifier
+func NagiosRange(specifier string) ([]BoundsOpt, error) {
+	var options []BoundsOpt
 	var lowerPart, upperPart string
 
 	// Invert bounds if specifier starts with '@'
@@ -84,20 +91,20 @@ func NagiosRange(specifier string) ([]boundsOpt, error) {
 	} else if len(parts) == 2 {
 		lowerPart, upperPart = parts[0], parts[1]
 	} else {
-		return []boundsOpt{}, errors.New("range specifier must contain only one colon")
+		return []BoundsOpt{}, errors.New("range specifier must contain only one colon")
 	}
 
 	// Attempt to parse lower bound
 	lowerBound, err := parseNagiosRangePart(lowerPart, true)
 	if err != nil {
-		return []boundsOpt{}, err
+		return []BoundsOpt{}, err
 	}
 	options = append(options, LowerBound(lowerBound))
 
 	// Attempt to parse upper bound
 	upperBound, err := parseNagiosRangePart(upperPart, false)
 	if err != nil {
-		return []boundsOpt{}, err
+		return []BoundsOpt{}, err
 	}
 	options = append(options, UpperBound(upperBound))
 
@@ -109,17 +116,17 @@ func parseNagiosRangePart(rangePart string, isStart bool) (float64, error) {
 	if rangePart == "" {
 		if isStart {
 			return 0, nil
-		} else {
-			return math.Inf(1), nil
 		}
+
+		return math.Inf(1), nil
 	}
 
 	if rangePart == "~" {
 		if isStart {
 			return math.Inf(-1), nil
-		} else {
-			return math.NaN(), errors.New("can not use negative infinity in 'end' range")
 		}
+
+		return math.NaN(), errors.New("can not use negative infinity in 'end' range")
 	}
 
 	value, err := strconv.ParseFloat(rangePart, strconv.IntSize)
@@ -130,19 +137,22 @@ func parseNagiosRangePart(rangePart string, isStart bool) (float64, error) {
 	return value, nil
 }
 
-func InvertedBounds(state bool) boundsOpt {
+// InvertedBounds is a functional option for NewBounds(), which inverts matching of the boundary (inside -> outside)
+func InvertedBounds(state bool) BoundsOpt {
 	return func(b *bounds) {
 		b.inverted = state
 	}
 }
 
-func LowerBound(value float64) boundsOpt {
+// LowerBound is a functional option for NewBounds(), which sets the lower boundary
+func LowerBound(value float64) BoundsOpt {
 	return func(b *bounds) {
 		b.lowerBound = optional.NewFloat64(value)
 	}
 }
 
-func UpperBound(value float64) boundsOpt {
+// UpperBound is a functional option for NewBounds(), which sets the upper boundary
+func UpperBound(value float64) BoundsOpt {
 	return func(b *bounds) {
 		b.upperBound = optional.NewFloat64(value)
 	}
@@ -160,9 +170,9 @@ func (b bounds) String() string {
 
 	if b.inverted {
 		return "outside " + result
-	} else {
-		return "inside " + result
 	}
+
+	return "inside " + result
 }
 
 func (b bounds) ToNagiosRange() string {

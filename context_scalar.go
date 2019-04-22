@@ -30,6 +30,8 @@ type scalarContext struct {
 	criticalThreshold OptionalBounds
 }
 
+// NewScalarContext creates a new scalar Context object, which handles metrics of the type NumericMetric and provides
+// the ability to constraint these metric values to a given warning and/or critical threshold range
 func NewScalarContext(name string, warningThreshold *Bounds, criticalThreshold *Bounds) Context {
 	scalarContext := &scalarContext{
 		baseContext: *newBaseContext(name, "%<name>s is %<value>s%<unit>s"),

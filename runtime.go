@@ -24,11 +24,13 @@ import (
 	"strings"
 )
 
+// Runtime executes a specific Check instance and prints or outputs the results according to the Nagios plugin specs
 type Runtime interface {
 	Execute(Check) CheckResult
 	ExecuteAndExit(Check)
 }
 
+// CheckResult contains the results of a Check together with an exit code to indicate the check state
 type CheckResult interface {
 	ExitCode() int8
 	Output() string
@@ -45,6 +47,7 @@ type checkResult struct {
 
 var illegalOutputChars = []string{"|"}
 
+// NewRuntime instantiates a new Runtime, optionally enabling verbose output
 func NewRuntime(verboseOutput bool) Runtime {
 	runtime := &baseRuntime{
 		verboseOutput: verboseOutput,
@@ -139,6 +142,7 @@ func (r baseRuntime) sanitizeString(value string, warnings WarningCollection) st
 	return value
 }
 
+// NewCheckResult instantiates a new CheckResult with the given exit code and output string
 func NewCheckResult(exitCode int8, output string) CheckResult {
 	checkResult := &checkResult{
 		exitCode: exitCode,

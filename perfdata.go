@@ -16,8 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//go:generate optional -type=PerfData
 package nagopher
+
+//go:generate optional -type=PerfData
 
 import (
 	"fmt"
@@ -25,6 +26,7 @@ import (
 	"strings"
 )
 
+// PerfData holds a Metric instance and allows transformation into Nagios performance data
 type PerfData interface {
 	ToNagiosPerfData() string
 	Metric() Metric
@@ -38,6 +40,7 @@ type perfData struct {
 
 const illegalNameChars = "'="
 
+// NewPerfData instantiates a new PerfData with the given metric and optional thresholds
 func NewPerfData(metric Metric, warningThreshold *Bounds, criticalThreshold *Bounds) (PerfData, error) {
 	if strings.ContainsAny(metric.Name(), illegalNameChars) {
 		return nil, fmt.Errorf("perfdata metric name [%s] contains invalid characters", metric.Name())
@@ -57,6 +60,8 @@ func NewPerfData(metric Metric, warningThreshold *Bounds, criticalThreshold *Bou
 	return perfData, nil
 }
 
+// NewNumericPerfData instantiates new PerfData. The parameters are being used to create a new NumericMetric instance,
+// which is then passed along with the optional thresholds to NewPerfData().
 func NewNumericPerfData(name string, value float64, valueUnit string, valueRange *Bounds,
 	warningThreshold *Bounds, criticalThreshold *Bounds) (PerfData, error) {
 	numericMetric, err := NewNumericMetric(name, value, valueUnit, valueRange, "perfdata")

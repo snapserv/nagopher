@@ -24,6 +24,10 @@ import (
 	"sort"
 )
 
+// Check collects metrics (results) and performance data, which are being associated to one or more given contexts.
+// Metrics are being collected by executing one or more resources using Resource.Probe(). Additional metadata without
+// a specific type can be added using Check.SetMeta() / Check.GetMeta(). Collected results can be queried by using
+// Check.State(), Check.Summary() or Check.VerboseSummary(), which use the configured summarizer instance.
 type Check interface {
 	Run(warnings WarningCollection)
 	SetMeta(key string, value interface{})
@@ -33,8 +37,8 @@ type Check interface {
 
 	Name() string
 	PerfData() []PerfData
-	Results() Collection
-	State() StateData
+	Results() ResultCollection
+	State() State
 	Summary() string
 	VerboseSummary() []string
 }
@@ -45,10 +49,11 @@ type baseCheck struct {
 	contexts     map[string]Context
 	resources    []Resource
 	performances []PerfData
-	results      Collection
+	results      ResultCollection
 	summarizer   Summarizer
 }
 
+// NewCheck instantiates a new Check object with the given name and summarizer
 func NewCheck(name string, summarizer Summarizer) Check {
 	check := &baseCheck{
 		name:       name,
@@ -129,11 +134,11 @@ func (c *baseCheck) AttachContexts(contexts ...Context) {
 	}
 }
 
-func (c baseCheck) Results() Collection {
+func (c baseCheck) Results() ResultCollection {
 	return c.results
 }
 
-func (c baseCheck) State() StateData {
+func (c baseCheck) State() State {
 	state, err := c.results.MostSignificantState().Get()
 	if err == nil {
 		return state
