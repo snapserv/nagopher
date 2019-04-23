@@ -55,7 +55,7 @@ func (c stringInfoContext) Evaluate(metric Metric, resource Resource) Result {
 // acceptable values during the evaluation phase. Should the value not be accepted, a problem state gets returned.
 func NewStringMatchContext(name string, problemState State, expectedValues []string) Context {
 	stringContext := &stringMatchContext{
-		baseContext: *newBaseContext(name, "%<name>s is %<value>s%<unit>s"),
+		baseContext: *newBaseContext(name, "%<name>s is %<value>s"),
 
 		problemState:   problemState,
 		expectedValues: stringsToLower(expectedValues),

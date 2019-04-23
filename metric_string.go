@@ -31,8 +31,8 @@ type stringMetric struct {
 }
 
 // NewStringMetric instantiates a new StringMetric with the given parameters.
-func NewStringMetric(name string, value string, context string) (StringMetric, error) {
-	baseMetric, err := newBaseMetric(name, "", nil, context)
+func NewStringMetric(name string, value string, contextName string) (StringMetric, error) {
+	baseMetric, err := newBaseMetric(name, "", nil, contextName)
 	if err != nil {
 		return nil, err
 	}
@@ -43,6 +43,16 @@ func NewStringMetric(name string, value string, context string) (StringMetric, e
 	}
 
 	return stringMetric, nil
+}
+
+// MustNewNumericMetric calls NewStringMetric and panics in case the creation of a metric instance fails
+func MustNewStringMetric(name string, value string, contextName string) StringMetric {
+	metric, err := NewStringMetric(name, value, contextName)
+	if err != nil {
+		panic(err)
+	}
+
+	return metric
 }
 
 func (m stringMetric) ToNagiosValue() string {

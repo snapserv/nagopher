@@ -61,17 +61,17 @@ func (c scalarContext) Evaluate(metric Metric, resource Resource) Result {
 	warningThreshold := c.warningThreshold.OrElse(emptyBounds)
 	criticalThreshold := c.criticalThreshold.OrElse(emptyBounds)
 
-	if criticalThreshold.Match(numericMetric.Value()) {
+	if !criticalThreshold.Match(numericMetric.Value()) {
 		return NewResult(
 			ResultState(StateCritical()),
 			ResultMetric(metric), ResultContext(c), ResultResource(resource),
-			ResultHint(criticalThreshold.String()),
+			ResultHint(criticalThreshold.ViolationHint()),
 		)
-	} else if warningThreshold.Match(numericMetric.Value()) {
+	} else if !warningThreshold.Match(numericMetric.Value()) {
 		return NewResult(
 			ResultState(StateWarning()),
 			ResultMetric(metric), ResultContext(c), ResultResource(resource),
-			ResultHint(warningThreshold.String()),
+			ResultHint(warningThreshold.ViolationHint()),
 		)
 	}
 

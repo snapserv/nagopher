@@ -32,6 +32,7 @@ import (
 // Bounds support matching float64 numbers against a given range, optionally inverting the result
 type Bounds interface {
 	fmt.Stringer
+	ViolationHint() string
 
 	ToNagiosRange() string
 	Match(value float64) bool
@@ -63,8 +64,18 @@ func NewBounds(options ...BoundsOpt) Bounds {
 	return threshold
 }
 
-// FromNagiosRange is a helper method, which constructs a new Bounds object from a Nagios range specifier
-func FromNagiosRange(specifier string) (Bounds, error) {
+// Returns a pointer or nil to optional bounds
+func OptionalBoundsPtr(optionalBounds OptionalBounds) *Bounds {
+	bounds, err := optionalBounds.Get()
+	if err != nil || bounds == nil {
+		return nil
+	}
+
+	return &bounds
+}
+
+// NewBoundsFromNagiosRange is a helper method, which constructs a new Bounds object from a Nagios range specifier
+func NewBoundsFromNagiosRange(specifier string) (Bounds, error) {
 	options, err := NagiosRange(specifier)
 	if err != nil {
 		return nil, err
@@ -159,20 +170,26 @@ func UpperBound(value float64) BoundsOpt {
 }
 
 func (b bounds) String() string {
-	var result string
+	if b.inverted {
+		return "outside range " + b.boundsToString()
+	}
 
+	return "inside range " + b.boundsToString()
+}
+
+func (b bounds) ViolationHint() string {
+	if b.inverted {
+		return "inside range " + b.boundsToString()
+	}
+
+	return "outside range " + b.boundsToString()
+}
+
+func (b bounds) boundsToString() string {
 	lowerBound := b.lowerBound.OrElse(math.NaN())
 	upperBound := b.upperBound.OrElse(math.NaN())
 
-	result += strconv.FormatFloat(lowerBound, 'f', -1, strconv.IntSize)
-	result += ":"
-	result += strconv.FormatFloat(upperBound, 'f', -1, strconv.IntSize)
-
-	if b.inverted {
-		return "outside " + result
-	}
-
-	return "inside " + result
+	return strconv.FormatFloat(lowerBound, 'f', -1, strconv.IntSize) + ":" + strconv.FormatFloat(upperBound, 'f', -1, strconv.IntSize)
 }
 
 func (b bounds) ToNagiosRange() string {

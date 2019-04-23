@@ -18,7 +18,10 @@
 
 package nagopher
 
-import "sort"
+import (
+	"github.com/markphelps/optional"
+	"sort"
+)
 
 // ResultCollection contains an arbitrary amount of Result instances and methods to sort them by relevance
 type ResultCollection interface {
@@ -27,6 +30,11 @@ type ResultCollection interface {
 	Count() int
 	MostSignificantResult() OptionalResult
 	MostSignificantState() OptionalState
+
+	GetByMetricName(name string) OptionalResult
+	GetMetricByName(name string) OptionalMetric
+	GetNumericMetricValue(name string) optional.Float64
+	GetStringMetricValue(name string) optional.String
 }
 
 type resultCollection struct {
@@ -66,6 +74,52 @@ func (c resultCollection) MostSignificantState() OptionalState {
 	}
 
 	return OptionalState{}
+}
+
+func (c resultCollection) GetByMetricName(name string) OptionalResult {
+	for _, result := range c.results {
+		metric, err := result.Metric().Get()
+		if err != nil || metric == nil {
+			continue
+		}
+
+		if metric.Name() == name {
+			return NewOptionalResult(result)
+		}
+	}
+
+	return OptionalResult{}
+}
+
+func (c resultCollection) GetMetricByName(name string) OptionalMetric {
+	result, err := c.GetByMetricName(name).Get()
+	if err == nil && result != nil {
+		return result.Metric()
+	}
+
+	return OptionalMetric{}
+}
+
+func (c resultCollection) GetNumericMetricValue(name string) optional.Float64 {
+	metric, err := c.GetMetricByName(name).Get()
+	if err == nil && metric != nil {
+		if numericMetric, ok := metric.(NumericMetric); ok {
+			return optional.NewFloat64(numericMetric.Value())
+		}
+	}
+
+	return optional.Float64{}
+}
+
+func (c resultCollection) GetStringMetricValue(name string) optional.String {
+	metric, err := c.GetMetricByName(name).Get()
+	if err == nil && metric != nil {
+		if stringMetric, ok := metric.(StringMetric); ok {
+			return optional.NewString(stringMetric.Value())
+		}
+	}
+
+	return optional.String{}
 }
 
 func (c *resultCollection) sort() {

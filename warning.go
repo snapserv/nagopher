@@ -59,7 +59,7 @@ func NewWarningCollection() WarningCollection {
 	return &warningCollection{}
 }
 
-func (wc warningCollection) Add(warnings ...Warning) {
+func (wc *warningCollection) Add(warnings ...Warning) {
 	wc.warnings = append(wc.warnings, warnings...)
 }
 

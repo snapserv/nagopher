@@ -51,6 +51,16 @@ func NewNumericMetric(name string, value float64, valueUnit string, valueRange *
 	return numericMetric, nil
 }
 
+// MustNewNumericMetric calls MustNewNumericMetric and panics in case the creation of a metric instance fails
+func MustNewNumericMetric(name string, value float64, valueUnit string, valueRange *Bounds, contextName string) NumericMetric {
+	metric, err := NewNumericMetric(name, value, valueUnit, valueRange, contextName)
+	if err != nil {
+		panic(err)
+	}
+
+	return metric
+}
+
 func (m numericMetric) ToNagiosValue() string {
 	if math.IsNaN(m.value) {
 		return "U"

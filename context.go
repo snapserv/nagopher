@@ -40,7 +40,7 @@ type baseContext struct {
 func newBaseContext(name string, format string) *baseContext {
 	baseContext := &baseContext{
 		name:   name,
-		format: name,
+		format: format,
 	}
 
 	return baseContext
