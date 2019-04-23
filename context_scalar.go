@@ -82,17 +82,7 @@ func (c scalarContext) Evaluate(metric Metric, resource Resource) Result {
 }
 
 func (c scalarContext) Performance(metric Metric, resource Resource) (OptionalPerfData, error) {
-	var warningThreshold *Bounds
-	var criticalThreshold *Bounds
-
-	if threshold, err := c.warningThreshold.Get(); err == nil {
-		warningThreshold = &threshold
-	}
-	if threshold, err := c.criticalThreshold.Get(); err == nil {
-		criticalThreshold = &threshold
-	}
-
-	perfData, err := NewPerfData(metric, warningThreshold, criticalThreshold)
+	perfData, err := NewPerfData(metric, OptionalBoundsPtr(c.warningThreshold), OptionalBoundsPtr(c.criticalThreshold))
 	if err != nil {
 		return OptionalPerfData{}, err
 	}

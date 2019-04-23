@@ -64,7 +64,8 @@ func NewBounds(options ...BoundsOpt) Bounds {
 	return threshold
 }
 
-// Returns a pointer or nil to optional bounds
+// OptionalBoundsPtr takes an optional bounds value and either returns a pointer to it or nil. It is the callers duty to
+// properly handle such nil values!
 func OptionalBoundsPtr(optionalBounds OptionalBounds) *Bounds {
 	bounds, err := optionalBounds.Get()
 	if err != nil || bounds == nil {

@@ -45,7 +45,7 @@ func NewStringMetric(name string, value string, contextName string) (StringMetri
 	return stringMetric, nil
 }
 
-// MustNewNumericMetric calls NewStringMetric and panics in case the creation of a metric instance fails
+// MustNewStringMetric calls NewStringMetric and panics in case the creation of a metric instance fails
 func MustNewStringMetric(name string, value string, contextName string) StringMetric {
 	metric, err := NewStringMetric(name, value, contextName)
 	if err != nil {

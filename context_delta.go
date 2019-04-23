@@ -12,6 +12,9 @@ type deltaContext struct {
 	previousValue optional.Float64
 }
 
+// NewDeltaContext creates a new scalar Context object, which operates the same way as a ScalarContext, but instead
+// of using the current absolute metric value, it will be compared to a previous measurement. It is the callers duty
+// to provide the previous metric value.
 func NewDeltaContext(name string, previousValue *float64, warningThreshold *Bounds, criticalThreshold *Bounds) Context {
 	baseContext := NewScalarContext(name, warningThreshold, criticalThreshold)
 	scalarContext, ok := baseContext.(*scalarContext)
