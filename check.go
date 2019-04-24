@@ -37,6 +37,8 @@ type Check interface {
 
 	Name() string
 	PerfData() []PerfData
+	Contexts() []Context
+	Resources() []Resource
 	Results() ResultCollection
 	State() State
 	Summary() string
@@ -47,7 +49,7 @@ type baseCheck struct {
 	name         string
 	meta         map[string]interface{}
 	contexts     map[string]Context
-	resources    []Resource
+	resources    map[*Resource]struct{}
 	performances []PerfData
 	results      ResultCollection
 	summarizer   Summarizer
@@ -60,6 +62,7 @@ func NewCheck(name string, summarizer Summarizer) Check {
 		summarizer: summarizer,
 		meta:       make(map[string]interface{}),
 		contexts:   make(map[string]Context),
+		resources:  make(map[*Resource]struct{}),
 		results:    NewResultCollection(),
 	}
 
@@ -67,12 +70,12 @@ func NewCheck(name string, summarizer Summarizer) Check {
 }
 
 func (c *baseCheck) Run(warnings WarningCollection) {
-	for _, resource := range c.resources {
-		err := c.evaluateResource(warnings, resource)
+	for resource := range c.resources {
+		err := c.evaluateResource(warnings, *resource)
 		if err != nil {
 			c.results.Add(NewResult(
 				ResultState(StateUnknown()),
-				ResultResource(resource), ResultHint(err.Error()),
+				ResultResource(*resource), ResultHint(err.Error()),
 			))
 		}
 	}
@@ -125,7 +128,9 @@ func (c baseCheck) GetMeta(key string, defaultValue interface{}) interface{} {
 }
 
 func (c *baseCheck) AttachResources(resources ...Resource) {
-	c.resources = append(c.resources, resources...)
+	for _, resource := range resources {
+		c.resources[&resource] = struct{}{}
+	}
 }
 
 func (c *baseCheck) AttachContexts(contexts ...Context) {
@@ -169,4 +174,22 @@ func (c baseCheck) Name() string {
 
 func (c baseCheck) PerfData() []PerfData {
 	return c.performances
+}
+
+func (c baseCheck) Contexts() []Context {
+	contexts := make([]Context, 0, len(c.contexts))
+	for _, context := range c.contexts {
+		contexts = append(contexts, context)
+	}
+
+	return contexts
+}
+
+func (c baseCheck) Resources() []Resource {
+	resources := make([]Resource, 0, len(c.resources))
+	for resource := range c.resources {
+		resources = append(resources, *resource)
+	}
+
+	return resources
 }
