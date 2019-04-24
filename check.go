@@ -70,6 +70,9 @@ func NewCheck(name string, summarizer Summarizer) Check {
 }
 
 func (c *baseCheck) Run(warnings WarningCollection) {
+	c.results = NewResultCollection()
+	c.performances = []PerfData{}
+
 	for resource := range c.resources {
 		err := c.evaluateResource(warnings, *resource)
 		if err != nil {
