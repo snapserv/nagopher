@@ -52,6 +52,7 @@ func TestResultCollection_GetMetricByName(t *testing.T) {
 	expectedMetric2 := MustNewNumericMetric("metric 2", 13.37, "", nil, "")
 	results := NewResultCollection()
 	results.Add(
+		NewResult(),
 		NewResult(ResultMetric(expectedMetric1)),
 		NewResult(ResultMetric(expectedMetric2)),
 	)

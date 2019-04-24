@@ -33,7 +33,7 @@ func NewDeltaContext(name string, previousValue *float64, warningThreshold *Boun
 	return deltaContext
 }
 
-func (c deltaContext) Evaluate(metric Metric, resource Resource) Result {
+func (c *deltaContext) Evaluate(metric Metric, resource Resource) Result {
 	numericMetric, ok := metric.(NumericMetric)
 	if !ok {
 		return NewResult(
