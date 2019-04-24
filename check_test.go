@@ -52,3 +52,58 @@ func TestBaseCheck_AttachResources(t *testing.T) {
 	assert.Contains(t, check.Resources(), resource1)
 	assert.Contains(t, check.Resources(), resource2)
 }
+
+func TestBaseCheck_State(t *testing.T) {
+	// given
+	check1 := NewCheck("check 1", NewSummarizer())
+	check2 := NewCheck("check 2", NewSummarizer())
+
+	// when
+	check1.Results().Add(
+		NewResult(ResultState(StateOk())),
+		NewResult(ResultState(StateWarning())),
+		NewResult(ResultState(StateCritical())),
+	)
+
+	// then
+	assert.Equal(t, StateCritical(), check1.State())
+	assert.Equal(t, StateUnknown(), check2.State())
+}
+
+func TestBaseCheck_Summary(t *testing.T) {
+	// given
+	summarizer := NewSummarizer()
+	check1 := NewCheck("check OK", summarizer)
+	check2 := NewCheck("check PROBLEM", summarizer)
+	check3 := NewCheck("check EMPTY", summarizer)
+
+	check1.Results().Add(NewResult(ResultState(StateOk()), ResultHint("OK")))
+	check2.Results().Add(NewResult(ResultState(StateWarning()), ResultHint("WARNING")))
+
+	// when
+	summary1 := check1.Summary()
+	summary2 := check2.Summary()
+	summary3 := check3.Summary()
+
+	// then
+	assert.Equal(t, summarizer.Ok(check1), summary1)
+	assert.Equal(t, summarizer.Problem(check2), summary2)
+	assert.Equal(t, summarizer.Empty(), summary3)
+}
+
+func TestBaseCheck_VerboseSummary(t *testing.T) {
+	// given
+	summarizer := NewSummarizer()
+	check := NewCheck("check", summarizer)
+	check.Results().Add(
+		NewResult(ResultState(StateOk()), ResultHint("This is fine.")),
+		NewResult(ResultState(StateWarning()), ResultHint("Works on my machine.")),
+		NewResult(ResultHint("Purely informational.")),
+	)
+
+	// when
+	verboseSummary := check.VerboseSummary()
+
+	// then
+	assert.Equal(t, summarizer.Verbose(check), verboseSummary)
+}
