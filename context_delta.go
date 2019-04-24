@@ -17,11 +17,7 @@ type deltaContext struct {
 // to provide the previous metric value.
 func NewDeltaContext(name string, previousValue *float64, warningThreshold *Bounds, criticalThreshold *Bounds) Context {
 	baseContext := NewScalarContext(name, warningThreshold, criticalThreshold)
-	scalarContext, ok := baseContext.(*scalarContext)
-	if !ok {
-		panic("nagopher: Could not cast NewScalarContext() to scalarContext")
-	}
-
+	scalarContext := baseContext.(*scalarContext)
 	deltaContext := &deltaContext{
 		scalarContext: *scalarContext,
 	}

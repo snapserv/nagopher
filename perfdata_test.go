@@ -24,11 +24,18 @@ func TestNewPerfData(t *testing.T) {
 
 func TestNewNumericPerfData(t *testing.T) {
 	// when
-	perfData, err := NewNumericPerfData("inv'=alid", 13.37, "", nil, nil, nil)
+	perfData1, err1 := NewNumericPerfData("test", 13.37, "", nil, nil, nil)
+	perfData2, err2 := NewNumericPerfData("inv'=alid", 13.37, "", nil, nil, nil)
+	perfData3, err3 := NewNumericPerfData("", 13.37, "", nil, nil, nil)
 
 	// then
-	assert.Error(t, err)
-	assert.Nil(t, perfData)
+	assert.NoError(t, err1)
+	assert.Error(t, err2)
+	assert.Error(t, err3)
+
+	assert.Implements(t, (*PerfData)(nil), perfData1)
+	assert.Nil(t, perfData2)
+	assert.Nil(t, perfData3)
 }
 
 func TestPerfData_ToNagiosPerfData(t *testing.T) {
