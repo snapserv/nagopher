@@ -28,6 +28,18 @@ func TestBaseSummarizer_Ok(t *testing.T) {
 	assert.Equal(t, "Result 1", summarizer.Ok(check))
 }
 
+func TestBaseSummarizer_Fallback(t *testing.T) {
+	// given
+	summarizer := NewSummarizer()
+
+	// when
+	check := NewCheck("check", summarizer)
+
+	// then
+	assert.Equal(t, summarizer.Empty(), summarizer.Ok(check))
+	assert.Equal(t, summarizer.Empty(), summarizer.Problem(check))
+}
+
 func TestBaseSummarizer_Problem(t *testing.T) {
 	// given
 	summarizer := NewSummarizer()
@@ -56,9 +68,10 @@ func TestBaseSummarizer_Verbose(t *testing.T) {
 		NewResult(ResultState(StateWarning()), ResultHint("Reason 1")),
 		NewResult(ResultState(StateCritical()), ResultHint("Reason 2")),
 		NewResult(ResultState(StateCritical()), ResultHint("Reason 3")),
+		NewResult(ResultHint("Informational Result")),
 	)
 
 	// then
-	expected := []string{"critical: Reason 2", "critical: Reason 3", "warning: Reason 1"}
+	expected := []string{"critical: Reason 2", "critical: Reason 3", "warning: Reason 1", "info: Informational Result"}
 	assert.Equal(t, expected, summarizer.Verbose(check))
 }

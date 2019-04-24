@@ -82,6 +82,21 @@ func TestNewBounds_NagiosRange(t *testing.T) {
 	}
 }
 
+func TestNewBounds_NagiosRange_Invalid(t *testing.T) {
+	// when
+	bounds1, err1 := NewBoundsFromNagiosRange(":~")
+	bounds2, err2 := NewBoundsFromNagiosRange("no:float")
+	bounds3, err3 := NewBoundsFromNagiosRange("::")
+
+	// then
+	assert.Error(t, err1)
+	assert.Error(t, err2)
+	assert.Error(t, err3)
+	assert.Nil(t, bounds1)
+	assert.Nil(t, bounds2)
+	assert.Nil(t, bounds3)
+}
+
 func TestBounds_NagiosRange(t *testing.T) {
 	// given
 	expectedRanges := map[string]string{
@@ -158,4 +173,27 @@ func TestBounds_Match_Inverted(t *testing.T) {
 	// then
 	assert.Subset(t, []bool{true}, trueMatches)
 	assert.Subset(t, []bool{false}, falseMatches)
+}
+
+func TestBounds_StringAndViolationHint(t *testing.T) {
+	// when
+	bounds1 := NewBounds(LowerBound(10), UpperBound(20))
+	bounds2 := NewBounds(LowerBound(10), UpperBound(20), InvertedBounds(true))
+
+	// then
+	assert.Equal(t, "inside range 10:20", bounds1.String())
+	assert.Equal(t, "outside range 10:20", bounds2.String())
+	assert.Equal(t, bounds1.String(), bounds2.ViolationHint())
+	assert.Equal(t, bounds2.String(), bounds1.ViolationHint())
+}
+
+func TestOptionalBoundsPtr(t *testing.T) {
+	// when
+	bounds := NewBounds()
+	optionalBounds1 := OptionalBounds{}
+	optionalBounds2 := NewOptionalBounds(bounds)
+
+	// then
+	assert.Nil(t, OptionalBoundsPtr(optionalBounds1))
+	assert.Empty(t, &bounds, OptionalBoundsPtr(optionalBounds2))
 }

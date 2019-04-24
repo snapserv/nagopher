@@ -41,6 +41,21 @@ func TestNewBaseMetric(t *testing.T) {
 	assert.Equal(t, expectedValueRange, actualValueRange)
 }
 
+func TestNewBaseMetric_Invalid(t *testing.T) {
+	// given
+	invertedBounds := NewBounds(InvertedBounds(true))
+
+	// when
+	metric1, err1 := newBaseMetric("", "", nil, "")
+	metric2, err2 := newBaseMetric("metric", "", &invertedBounds, "")
+
+	// then
+	assert.Error(t, err1)
+	assert.Error(t, err2)
+	assert.Nil(t, metric1)
+	assert.Nil(t, metric2)
+}
+
 func TestBaseMetric_ContextName_Empty(t *testing.T) {
 	// when
 	metric, err := newBaseMetric("metric", "", nil, "")
