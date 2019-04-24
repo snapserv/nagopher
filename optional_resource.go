@@ -4,7 +4,6 @@
 package nagopher
 
 import (
-	"encoding/json"
 	"errors"
 )
 
@@ -50,28 +49,4 @@ func (o OptionalResource) If(fn func(Resource)) {
 	if o.Present() {
 		fn(*o.value)
 	}
-}
-
-func (o OptionalResource) MarshalJSON() ([]byte, error) {
-	if o.Present() {
-		return json.Marshal(o.value)
-	}
-	return json.Marshal(nil)
-}
-
-func (o *OptionalResource) UnmarshalJSON(data []byte) error {
-
-	if string(data) == "null" {
-		o.value = nil
-		return nil
-	}
-
-	var value Resource
-
-	if err := json.Unmarshal(data, &value); err != nil {
-		return err
-	}
-
-	o.value = &value
-	return nil
 }

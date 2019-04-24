@@ -48,9 +48,9 @@ func TestOptionalBounds_Set(t *testing.T) {
 	bounds1 := NewBounds()
 	bounds2 := NewBounds()
 	alternativeBounds := NewBounds()
+	optionalBounds := NewOptionalBounds(bounds1)
 
 	// when
-	optionalBounds := NewOptionalBounds(bounds1)
 	optionalBounds.Set(bounds2)
 
 	// then
@@ -62,9 +62,9 @@ func TestOptionalBounds_If(t *testing.T) {
 	// given
 	var actualBoundsPtr *Bounds = nil
 	expectedBounds := NewBounds()
+	optionalBounds := NewOptionalBounds(expectedBounds)
 
 	// when
-	optionalBounds := NewOptionalBounds(expectedBounds)
 	optionalBounds.If(func(bounds Bounds) {
 		actualBoundsPtr = &bounds
 	})
