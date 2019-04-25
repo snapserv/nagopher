@@ -65,7 +65,7 @@ func TestNumericMetric_ToNagiosValue(t *testing.T) {
 
 func TestNumericMetric_Value(t *testing.T) {
 	// given
-	var value float64 = 13.37
+	var value = 13.37
 
 	// when
 	metric := MustNewNumericMetric("metric", value, "", nil, "")

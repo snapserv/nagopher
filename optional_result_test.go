@@ -78,7 +78,7 @@ func TestOptionalResult_Set(t *testing.T) {
 
 func TestOptionalResult_If(t *testing.T) {
 	// given
-	var actualResultPtr *Result = nil
+	var actualResultPtr *Result
 	var expectedResult Result
 	expectedResult = NewResult()
 

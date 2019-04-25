@@ -78,7 +78,7 @@ func TestOptionalBounds_Set(t *testing.T) {
 
 func TestOptionalBounds_If(t *testing.T) {
 	// given
-	var actualBoundsPtr *Bounds = nil
+	var actualBoundsPtr *Bounds
 	expectedBounds := NewBounds()
 	optionalBounds := NewOptionalBounds(expectedBounds)
 

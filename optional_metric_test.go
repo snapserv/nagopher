@@ -78,7 +78,7 @@ func TestOptionalMetric_Set(t *testing.T) {
 
 func TestOptionalMetric_If(t *testing.T) {
 	// given
-	var actualMetricPtr *Metric = nil
+	var actualMetricPtr *Metric
 	var expectedMetric Metric
 	expectedMetric, _ = NewStringMetric("expected", "", "")
 

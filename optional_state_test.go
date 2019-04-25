@@ -78,7 +78,7 @@ func TestOptionalState_Set(t *testing.T) {
 
 func TestOptionalState_If(t *testing.T) {
 	// given
-	var actualStatePtr *State = nil
+	var actualStatePtr *State
 	var expectedState State
 	expectedState = StateOk()
 

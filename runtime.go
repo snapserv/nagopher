@@ -45,8 +45,8 @@ type checkResult struct {
 	output   string
 }
 
-var resultOutputFunction func(...interface{}) (int, error) = fmt.Print
-var resultExitFunction func(int) = os.Exit
+var resultOutputFunction = fmt.Print
+var resultExitFunction = os.Exit
 var illegalOutputChars = []string{"|"}
 
 // NewRuntime instantiates a new Runtime, optionally enabling verbose output

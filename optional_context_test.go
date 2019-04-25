@@ -78,7 +78,7 @@ func TestOptionalContext_Set(t *testing.T) {
 
 func TestOptionalContext_If(t *testing.T) {
 	// given
-	var actualContextPtr *Context = nil
+	var actualContextPtr *Context
 	expectedContext := NewStringInfoContext("expected")
 
 	// when

@@ -78,7 +78,7 @@ func TestOptionalPerfData_Set(t *testing.T) {
 
 func TestOptionalPerfData_If(t *testing.T) {
 	// given
-	var actualPerfDataPtr *PerfData = nil
+	var actualPerfDataPtr *PerfData
 	var expectedPerfData PerfData
 	expectedPerfData, _ = NewNumericPerfData("expected", 0, "", nil, nil, nil)
 

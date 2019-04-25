@@ -47,7 +47,7 @@ func TestMustNewStringMetric(t *testing.T) {
 
 func TestStringMetric_ToNagiosValue(t *testing.T) {
 	// given
-	var value string = "Hello World"
+	var value = "Hello World"
 
 	// when
 	metric := MustNewStringMetric("test", value, "")
@@ -58,7 +58,7 @@ func TestStringMetric_ToNagiosValue(t *testing.T) {
 
 func TestStringMetric_Value(t *testing.T) {
 	// given
-	var value string = "Hello World"
+	var value = "Hello World"
 
 	// when
 	metric := MustNewStringMetric("test", value, "")

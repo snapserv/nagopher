@@ -78,7 +78,7 @@ func TestOptionalResource_Set(t *testing.T) {
 
 func TestOptionalResource_If(t *testing.T) {
 	// given
-	var actualResourcePtr *Resource = nil
+	var actualResourcePtr *Resource
 	var expectedResource Resource
 	expectedResource = NewResource()
 

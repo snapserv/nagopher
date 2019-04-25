@@ -1,6 +1,6 @@
 GO             = go
 GOFMT          = go fmt
-REVIVE         = revive
+GOLINT         = golint
 GOVERALLS      = goveralls
 GOVERALLS_ARGS = -service=travis-ci
 
@@ -13,13 +13,13 @@ build:
 
 .PHONY: devel-deps
 devel-deps:
-	$(GO) get -u github.com/mgechev/revive
+	$(GO) get -u golang.org/x/lint/golint
 	$(GO) get -u github.com/mattn/goveralls
 
 .PHONY: lint
 lint: devel-deps
 	$(GO) vet ./...
-	$(REVIVE) $(addprefix -exclude ,$(wildcard optional_*.go)) ./...
+	$(GOLINT) -set_exit_status ./...
 
 .PHONY: test
 test: devel-deps

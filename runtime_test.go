@@ -114,7 +114,7 @@ func TestBaseRuntime_Execute_ProbeError(t *testing.T) {
 	// then
 	assert.Equal(t, StateUnknown().ExitCode(), result.ExitCode())
 	assert.Equal(t, strings.Join([]string{
-		"CHECK UNKNOWN - artificial error happened here!",
+		"CHECK UNKNOWN - artificial error happened here",
 	}, "\n")+"\n", result.Output())
 }
 
@@ -135,8 +135,8 @@ func TestBaseRuntime_Execute_PerformanceError(t *testing.T) {
 }
 
 func TestBaseRuntime_ExecuteAndExit(t *testing.T) {
-	var resultExitCode int = -1
-	var resultOutput string = ""
+	var resultExitCode = -1
+	var resultOutput = ""
 
 	// given
 	check := NewCheck("check", NewSummarizer())
@@ -200,7 +200,7 @@ func newMockProbeErrorResource() Resource {
 }
 
 func (r mockProbeErrorResource) Probe(warnings WarningCollection) ([]Metric, error) {
-	return []Metric{}, fmt.Errorf("artificial error happened here!")
+	return []Metric{}, fmt.Errorf("artificial error happened here")
 }
 
 func newMockPerformanceErrorResource() Resource {
