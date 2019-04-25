@@ -27,7 +27,7 @@ import (
 // Runtime executes a specific Check instance and prints or outputs the results according to the Nagios plugin specs
 type Runtime interface {
 	Execute(Check) CheckResult
-	ExecuteAndExit(Check)
+	ExecuteAndExit(check Check)
 }
 
 // CheckResult contains the results of a Check together with an exit code to indicate the check state
@@ -45,6 +45,8 @@ type checkResult struct {
 	output   string
 }
 
+var resultOutputFunction func(...interface{}) (int, error) = fmt.Print
+var resultExitFunction func(int) = os.Exit
 var illegalOutputChars = []string{"|"}
 
 // NewRuntime instantiates a new Runtime, optionally enabling verbose output
@@ -68,8 +70,12 @@ func (r baseRuntime) Execute(check Check) CheckResult {
 
 func (r baseRuntime) ExecuteAndExit(check Check) {
 	result := r.Execute(check)
-	fmt.Print(result.Output())
-	os.Exit(int(result.ExitCode()))
+	_, err := resultOutputFunction(result.Output())
+	if err != nil {
+		panic(err)
+	}
+
+	resultExitFunction(int(result.ExitCode()))
 }
 
 func (r baseRuntime) buildNagiosOutput(check Check, warnings WarningCollection) string {

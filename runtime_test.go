@@ -1,12 +1,25 @@
 package nagopher
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
 )
 
-type MockResource struct {
+type mockResource struct {
+	Resource
+}
+
+type mockEmptyResource struct {
+	Resource
+}
+
+type mockProbeErrorResource struct {
+	Resource
+}
+
+type mockPerformanceErrorResource struct {
 	Resource
 }
 
@@ -16,44 +29,115 @@ func TestBaseRuntime_Execute(t *testing.T) {
 	check1 := NewCheck("usage", NewSummarizer())
 	check2 := NewCheck("usage", NewSummarizer())
 
-	check1.AttachResources(NewMockResource())
+	check1.AttachResources(newMockResource())
 	check1.AttachContexts(NewScalarContext("usage", nil, nil))
-	check2.AttachResources(NewMockResource())
+	check2.AttachResources(newMockResource())
 	check2.AttachContexts(NewScalarContext("usage", &warningThreshold, nil))
 
 	// when
-	actualResult1 := NewRuntime(false).Execute(check1) // non-verbose
-	actualResult2 := NewRuntime(true).Execute(check2)  // verbose
+	result1 := NewRuntime(false).Execute(check1) // non-verbose
+	result2 := NewRuntime(true).Execute(check2)  // verbose
 
 	// then
-	assert.Equal(t, StateOk().ExitCode(), actualResult1.ExitCode())
+	assert.Equal(t, StateOk().ExitCode(), result1.ExitCode())
 	assert.Equal(t, strings.Join([]string{
 		"USAGE OK - usage1 is 49.4% | usage1=49.4% usage2=92.6% usage3=83.1",
 		"nagopher: stripped illegal character from string [usage3=83.1]",
-	}, "\n")+"\n", actualResult1.Output())
+	}, "\n")+"\n", result1.Output())
 
-	assert.Equal(t, StateWarning().ExitCode(), actualResult2.ExitCode())
+	assert.Equal(t, StateWarning().ExitCode(), result2.ExitCode())
 	assert.Equal(t, strings.Join([]string{
 		"USAGE WARNING - usage2 is 92.6% (outside range 10:80) | usage1=49.4%;10:80 usage2=92.6%;10:80 usage3=83.1;10:80",
 		"warning: usage2 is 92.6% (outside range 10:80)",
 		"warning: usage3 is 83.1 (outside range 10:80)",
 		"nagopher: stripped illegal character from string [usage3=83.1;10:80]",
 		"nagopher: stripped illegal character from string [warning: usage3 is 83.1 (outside range 10:80)]",
-	}, "\n")+"\n", actualResult2.Output())
+	}, "\n")+"\n", result2.Output())
 }
 
-func NewMockResource() Resource {
-	return &MockResource{
-		Resource: NewResource(),
+func TestBaseRuntime_Execute_MissingContext(t *testing.T) {
+	// given
+	check := NewCheck("check", NewSummarizer())
+	check.AttachResources(newMockResource())
+
+	// when
+	result := NewRuntime(false).Execute(check)
+
+	// then
+	assert.Equal(t, StateUnknown().ExitCode(), result.ExitCode())
+	assert.Equal(t, strings.Join([]string{
+		"CHECK UNKNOWN - nagopher: missing context with name [usage]",
+	}, "\n")+"\n", result.Output())
+}
+
+func TestBaseRuntime_Execute_Empty(t *testing.T) {
+	// given
+	check := NewCheck("check", NewSummarizer())
+	check.AttachResources(newMockEmptyResource())
+
+	// when
+	result := NewRuntime(false).Execute(check)
+
+	// then
+	assert.Equal(t, StateUnknown().ExitCode(), result.ExitCode())
+	assert.Equal(t, strings.Join([]string{
+		"CHECK UNKNOWN - nagopher: resource [*nagopher.mockEmptyResource] did not return any metrics",
+	}, "\n")+"\n", result.Output())
+}
+
+func TestBaseRuntime_Execute_ProbeError(t *testing.T) {
+	// given
+	check := NewCheck("check", NewSummarizer())
+	check.AttachResources(newMockProbeErrorResource())
+
+	// when
+	result := NewRuntime(false).Execute(check)
+
+	// then
+	assert.Equal(t, StateUnknown().ExitCode(), result.ExitCode())
+	assert.Equal(t, strings.Join([]string{
+		"CHECK UNKNOWN - artificial error happened here!",
+	}, "\n")+"\n", result.Output())
+}
+
+func TestBaseRuntime_Execute_PerformanceError(t *testing.T) {
+	// given
+	check := NewCheck("check", NewSummarizer())
+	check.AttachResources(newMockPerformanceErrorResource())
+	check.AttachContexts(NewScalarContext("usage", nil, nil))
+
+	// when
+	result := NewRuntime(false).Execute(check)
+
+	// then
+	assert.Equal(t, StateUnknown().ExitCode(), result.ExitCode())
+	assert.Equal(t, strings.Join([]string{
+		"CHECK UNKNOWN - nagopher: collecting performance data failed with [perfdata metric name [inv'=alid] contains invalid characters]",
+	}, "\n")+"\n", result.Output())
+}
+
+func TestBaseRuntime_ExecuteAndExit(t *testing.T) {
+	var resultExitCode int = -1
+	var resultOutput string = ""
+
+	// given
+	check := NewCheck("check", NewSummarizer())
+	check.AttachResources(newMockResource())
+	check.AttachContexts(NewScalarContext("usage", nil, nil))
+
+	resultExitFunction = func(exitCode int) { resultExitCode = exitCode }
+	resultOutputFunction = func(values ...interface{}) (int, error) {
+		resultOutput = fmt.Sprint(values...)
+		return len(resultOutput), nil
 	}
-}
 
-func (r MockResource) Probe(warnings WarningCollection) ([]Metric, error) {
-	return []Metric{
-		MustNewNumericMetric("usage1", 49.4, "%", nil, "usage"),
-		MustNewNumericMetric("usage2", 92.6, "%", nil, "usage"),
-		MustNewNumericMetric("usage3", 83.1, "|", nil, "usage"),
-	}, nil
+	// when
+	expectedResult := NewRuntime(false).Execute(check)
+	NewRuntime(false).ExecuteAndExit(check)
+
+	// then
+	assert.Equal(t, int(expectedResult.ExitCode()), resultExitCode)
+	assert.Equal(t, expectedResult.Output(), resultOutput)
 }
 
 func TestNewCheckResult(t *testing.T) {
@@ -65,4 +149,50 @@ func TestNewCheckResult(t *testing.T) {
 	// then
 	assert.Equal(t, exitCode, checkResult.ExitCode())
 	assert.Equal(t, description, checkResult.Output())
+}
+
+func newMockResource() Resource {
+	return &mockResource{
+		Resource: NewResource(),
+	}
+}
+
+func (r mockResource) Probe(warnings WarningCollection) ([]Metric, error) {
+	return []Metric{
+		MustNewNumericMetric("usage1", 49.4, "%", nil, "usage"),
+		MustNewNumericMetric("usage2", 92.6, "%", nil, "usage"),
+		MustNewNumericMetric("usage3", 83.1, "|", nil, "usage"),
+	}, nil
+}
+
+func newMockEmptyResource() Resource {
+	return &mockEmptyResource{
+		Resource: NewResource(),
+	}
+}
+
+func (r mockEmptyResource) Probe(warnings WarningCollection) ([]Metric, error) {
+	return []Metric{}, nil
+}
+
+func newMockProbeErrorResource() Resource {
+	return &mockProbeErrorResource{
+		Resource: NewResource(),
+	}
+}
+
+func (r mockProbeErrorResource) Probe(warnings WarningCollection) ([]Metric, error) {
+	return []Metric{}, fmt.Errorf("artificial error happened here!")
+}
+
+func newMockPerformanceErrorResource() Resource {
+	return &mockPerformanceErrorResource{
+		Resource: NewResource(),
+	}
+}
+
+func (r mockPerformanceErrorResource) Probe(warnings WarningCollection) ([]Metric, error) {
+	return []Metric{
+		MustNewNumericMetric("inv'=alid", 49.4, "%", nil, "usage"),
+	}, nil
 }
