@@ -18,8 +18,6 @@
 
 package nagopher
 
-//go:generate optional -type=Context
-
 import (
 	"github.com/chonla/format"
 )

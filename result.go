@@ -18,8 +18,6 @@
 
 package nagopher
 
-//go:generate optional -type=Result
-
 import (
 	"fmt"
 )

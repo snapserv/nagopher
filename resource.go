@@ -18,8 +18,6 @@
 
 package nagopher
 
-//go:generate optional -type=Resource
-
 // Resource offers a method for collecting one or more metrics
 type Resource interface {
 	Probe(WarningCollection) ([]Metric, error)

@@ -18,8 +18,6 @@
 
 package nagopher
 
-//go:generate optional -type=PerfData
-
 import (
 	"fmt"
 	"regexp"

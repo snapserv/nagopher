@@ -18,8 +18,6 @@
 
 package nagopher
 
-//go:generate optional -type=Metric
-
 import (
 	"errors"
 	"github.com/markphelps/optional"

@@ -18,8 +18,6 @@
 
 package nagopher
 
-//go:generate optional -type=State
-
 // State represents a Nagios plugin state, which consists of an exit code and description
 type State interface {
 	ExitCode() int8

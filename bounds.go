@@ -18,8 +18,6 @@
 
 package nagopher
 
-//go:generate optional -type=Bounds
-
 import (
 	"errors"
 	"fmt"
