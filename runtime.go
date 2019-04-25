@@ -70,11 +70,7 @@ func (r baseRuntime) Execute(check Check) CheckResult {
 
 func (r baseRuntime) ExecuteAndExit(check Check) {
 	result := r.Execute(check)
-	_, err := resultOutputFunction(result.Output())
-	if err != nil {
-		panic(err)
-	}
-
+	_, _ = resultOutputFunction(result.Output())
 	resultExitFunction(int(result.ExitCode()))
 }
 
