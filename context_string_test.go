@@ -70,3 +70,17 @@ func TestStringMatchContext_Evaluate(t *testing.T) {
 	assert.Equal(t, "got [ghj], expected [abc],[def],[ghi]", result3.Hint())
 	assert.Contains(t, result4.Hint(), "StringMatchContext can not process metric of type")
 }
+
+func TestNewStringMatchContext_Evaluate_Empty(t *testing.T) {
+	// given
+	context := NewStringMatchContext("context", StateWarning(), []string{})
+	metric := MustNewStringMetric("metric", "Hello World", "")
+	resource := NewResource()
+
+	// when
+	result := context.Evaluate(metric, resource)
+
+	// then
+	assert.Equal(t, StateOk(), result.State().OrElse(nil))
+	assert.Equal(t, "", result.Hint())
+}

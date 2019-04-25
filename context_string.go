@@ -74,6 +74,13 @@ func (c stringMatchContext) Evaluate(metric Metric, resource Resource) Result {
 		)
 	}
 
+	if len(c.expectedValues) == 0 {
+		return NewResult(
+			ResultState(StateOk()),
+			ResultMetric(metric), ResultContext(c), ResultResource(resource),
+		)
+	}
+
 	value := strings.ToLower(stringMetric.Value())
 	for _, expectedValue := range c.expectedValues {
 		if value == expectedValue {
