@@ -97,7 +97,7 @@ func NagiosRange(specifier string) ([]BoundsOpt, error) {
 	// Split specifier by colon to determine given parts
 	parts := strings.Split(specifier, ":")
 	if len(parts) == 1 {
-		lowerPart, upperPart = parts[0], ""
+		lowerPart, upperPart = "", parts[0]
 	} else if len(parts) == 2 {
 		lowerPart, upperPart = parts[0], parts[1]
 	} else {

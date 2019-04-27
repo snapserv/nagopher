@@ -54,6 +54,7 @@ func TestNewBounds_NagiosRange(t *testing.T) {
 		upperBound float64
 	}{
 		"":    {false, 0, math.Inf(1)},
+		"1":   {false, 0, 1},
 		":":   {false, 0, math.Inf(1)},
 		"~:":  {false, math.Inf(-1), math.Inf(1)},
 		"1:":  {false, 1, math.Inf(1)},
@@ -85,16 +86,20 @@ func TestNewBounds_NagiosRange(t *testing.T) {
 func TestNewBounds_NagiosRange_Invalid(t *testing.T) {
 	// when
 	bounds1, err1 := NewBoundsFromNagiosRange(":~")
-	bounds2, err2 := NewBoundsFromNagiosRange("no:float")
-	bounds3, err3 := NewBoundsFromNagiosRange("::")
+	bounds2, err2 := NewBoundsFromNagiosRange(":~")
+	bounds3, err3 := NewBoundsFromNagiosRange("no:float")
+	bounds4, err4 := NewBoundsFromNagiosRange("::")
 
 	// then
 	assert.Error(t, err1)
 	assert.Error(t, err2)
 	assert.Error(t, err3)
+	assert.Error(t, err4)
+
 	assert.Nil(t, bounds1)
 	assert.Nil(t, bounds2)
 	assert.Nil(t, bounds3)
+	assert.Nil(t, bounds4)
 }
 
 func TestBounds_NagiosRange(t *testing.T) {
@@ -102,7 +107,6 @@ func TestBounds_NagiosRange(t *testing.T) {
 	expectedRanges := map[string]string{
 		"":    "",
 		":":   "",
-		"~":   "~",
 		"~:":  "~",
 		"@":   "@",
 		"@:":  "@",
