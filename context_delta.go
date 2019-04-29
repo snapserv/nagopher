@@ -20,28 +20,24 @@ package nagopher
 
 import (
 	"fmt"
-	"github.com/markphelps/optional"
 	"reflect"
 )
 
 type deltaContext struct {
 	scalarContext
 
-	previousValue optional.Float64
+	previousValue *float64
 }
 
 // NewDeltaContext creates a new scalar Context object, which operates the same way as a ScalarContext, but instead
 // of using the current absolute metric value, it will be compared to a previous measurement. It is the callers duty
-// to provide the previous metric value.
+// to provide a pointer to the previous metric value or nil, if not available.
 func NewDeltaContext(name string, previousValue *float64, warningThreshold *Bounds, criticalThreshold *Bounds) Context {
 	baseContext := NewScalarContext(name, warningThreshold, criticalThreshold)
 	scalarContext := baseContext.(*scalarContext)
 	deltaContext := &deltaContext{
 		scalarContext: *scalarContext,
-	}
-
-	if previousValue != nil {
-		deltaContext.previousValue = optional.NewFloat64(*previousValue)
+		previousValue: previousValue,
 	}
 
 	return deltaContext
@@ -58,8 +54,13 @@ func (c *deltaContext) Evaluate(metric Metric, resource Resource) Result {
 	}
 
 	metricValue := numericMetric.Value()
-	deltaValue := metricValue - c.previousValue.OrElse(0)
-	c.previousValue.Set(metricValue)
+	previousValue := float64(0)
+	if c.previousValue != nil {
+		previousValue = *c.previousValue
+		*c.previousValue = metricValue
+	}
+
+	deltaValue := metricValue - previousValue
 	deltaMetric := MustNewNumericMetric(numericMetric.Name()+"_delta", deltaValue, "", nil, numericMetric.ContextName())
 
 	emptyBounds := NewBounds()
