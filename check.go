@@ -98,10 +98,6 @@ func (c *baseCheck) evaluateResource(warnings WarningCollection, resource Resour
 		return err
 	}
 
-	if err := resource.Teardown(warnings); err != nil {
-		return err
-	}
-
 	if len(metrics) == 0 {
 		return fmt.Errorf("nagopher: resource [%s] did not return any metrics", reflect.TypeOf(resource))
 	}
@@ -122,6 +118,10 @@ func (c *baseCheck) evaluateResource(warnings WarningCollection, resource Resour
 		if performance, err := perfData.Get(); err == nil {
 			c.performances = append(c.performances, performance)
 		}
+	}
+
+	if err := resource.Teardown(warnings); err != nil {
+		return err
 	}
 
 	return nil

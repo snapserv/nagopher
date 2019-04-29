@@ -78,8 +78,10 @@ func (r baseRuntime) buildNagiosOutput(check Check, warnings WarningCollection) 
 	var outputParts []string
 
 	outputParts = append(outputParts, r.buildNagiosStatus(check, warnings))
-	if perfData := r.buildNagiosPerfData(check.PerfData(), warnings); perfData != "" {
-		outputParts = append(outputParts, " | ", perfData)
+	if check.State() != StateUnknown() {
+		if perfData := r.buildNagiosPerfData(check.PerfData(), warnings); perfData != "" {
+			outputParts = append(outputParts, " | ", perfData)
+		}
 	}
 	outputParts = append(outputParts, "\n")
 

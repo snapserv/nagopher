@@ -145,6 +145,7 @@ func TestBaseRuntime_Execute_TeardownError(t *testing.T) {
 	// given
 	check := NewCheck("check", NewSummarizer())
 	check.AttachResources(newMockTeardownErrorResource())
+	check.AttachContexts(NewScalarContext("dummy", nil, nil))
 
 	// when
 	result := NewRuntime(false).Execute(check)
@@ -259,6 +260,13 @@ func newMockTeardownErrorResource() Resource {
 func (r mockTeardownErrorResource) Teardown(warnings WarningCollection) error {
 	return fmt.Errorf("artificial error happened here")
 }
+
+func (r mockTeardownErrorResource) Probe(warnings WarningCollection) ([]Metric, error) {
+	return []Metric{
+		MustNewNumericMetric("dummy", 0, "", nil, "dummy"),
+	}, nil
+}
+
 func newMockPerformanceErrorResource() Resource {
 	return &mockPerformanceErrorResource{
 		Resource: NewResource(),
