@@ -20,7 +20,9 @@ package nagopher
 
 // Resource offers a method for collecting one or more metrics
 type Resource interface {
+	Setup(WarningCollection) error
 	Probe(WarningCollection) ([]Metric, error)
+	Teardown(WarningCollection) error
 }
 
 type baseResource struct{}
@@ -32,4 +34,12 @@ func NewResource() Resource {
 
 func (r baseResource) Probe(warnings WarningCollection) ([]Metric, error) {
 	return []Metric{}, nil
+}
+
+func (r baseResource) Setup(warnings WarningCollection) error {
+	return nil
+}
+
+func (r baseResource) Teardown(warnings WarningCollection) error {
+	return nil
 }

@@ -37,6 +37,14 @@ type mockProbeErrorResource struct {
 	Resource
 }
 
+type mockSetupErrorResource struct {
+	Resource
+}
+
+type mockTeardownErrorResource struct {
+	Resource
+}
+
 type mockPerformanceErrorResource struct {
 	Resource
 }
@@ -107,6 +115,36 @@ func TestBaseRuntime_Execute_ProbeError(t *testing.T) {
 	// given
 	check := NewCheck("check", NewSummarizer())
 	check.AttachResources(newMockProbeErrorResource())
+
+	// when
+	result := NewRuntime(false).Execute(check)
+
+	// then
+	assert.Equal(t, StateUnknown().ExitCode(), result.ExitCode())
+	assert.Equal(t, strings.Join([]string{
+		"CHECK UNKNOWN - artificial error happened here",
+	}, "\n")+"\n", result.Output())
+}
+
+func TestBaseRuntime_Execute_SetupError(t *testing.T) {
+	// given
+	check := NewCheck("check", NewSummarizer())
+	check.AttachResources(newMockSetupErrorResource())
+
+	// when
+	result := NewRuntime(false).Execute(check)
+
+	// then
+	assert.Equal(t, StateUnknown().ExitCode(), result.ExitCode())
+	assert.Equal(t, strings.Join([]string{
+		"CHECK UNKNOWN - artificial error happened here",
+	}, "\n")+"\n", result.Output())
+}
+
+func TestBaseRuntime_Execute_TeardownError(t *testing.T) {
+	// given
+	check := NewCheck("check", NewSummarizer())
+	check.AttachResources(newMockTeardownErrorResource())
 
 	// when
 	result := NewRuntime(false).Execute(check)
@@ -203,6 +241,24 @@ func (r mockProbeErrorResource) Probe(warnings WarningCollection) ([]Metric, err
 	return []Metric{}, fmt.Errorf("artificial error happened here")
 }
 
+func newMockSetupErrorResource() Resource {
+	return &mockSetupErrorResource{
+		Resource: NewResource(),
+	}
+}
+
+func (r mockSetupErrorResource) Setup(warnings WarningCollection) error {
+	return fmt.Errorf("artificial error happened here")
+}
+func newMockTeardownErrorResource() Resource {
+	return &mockTeardownErrorResource{
+		Resource: NewResource(),
+	}
+}
+
+func (r mockTeardownErrorResource) Teardown(warnings WarningCollection) error {
+	return fmt.Errorf("artificial error happened here")
+}
 func newMockPerformanceErrorResource() Resource {
 	return &mockPerformanceErrorResource{
 		Resource: NewResource(),

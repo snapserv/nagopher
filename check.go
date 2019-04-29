@@ -89,10 +89,19 @@ func (c *baseCheck) Run(warnings WarningCollection) {
 }
 
 func (c *baseCheck) evaluateResource(warnings WarningCollection, resource Resource) error {
+	if err := resource.Setup(warnings); err != nil {
+		return err
+	}
+
 	metrics, err := resource.Probe(warnings)
 	if err != nil {
 		return err
 	}
+
+	if err := resource.Teardown(warnings); err != nil {
+		return err
+	}
+
 	if len(metrics) == 0 {
 		return fmt.Errorf("nagopher: resource [%s] did not return any metrics", reflect.TypeOf(resource))
 	}
