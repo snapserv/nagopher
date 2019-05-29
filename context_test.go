@@ -26,7 +26,7 @@ import (
 func TestBaseContext_Describe(t *testing.T) {
 	// given
 	metric := MustNewNumericMetric("test", 13.37, "apples", nil, "")
-	context := newBaseContext("Test Context", "name=%<name>s value=%<value>s unit=%<unit>s")
+	context := NewBaseContext("Test Context", "name=%<name>s value=%<value>s unit=%<unit>s")
 
 	// when
 	description := context.Describe(metric)
@@ -37,7 +37,7 @@ func TestBaseContext_Describe(t *testing.T) {
 
 func TestBaseContext_Evaluate(t *testing.T) {
 	// given
-	context := newBaseContext("Test Context", "%<value>s")
+	context := NewBaseContext("Test Context", "%<value>s")
 	expectedMetric := MustNewStringMetric("string", "Hello", "")
 	expectedResource := NewResource()
 
@@ -55,14 +55,14 @@ func TestBaseContext_Evaluate(t *testing.T) {
 	assert.Equal(t, true, result.Resource().Present())
 
 	assert.Equal(t, StateOk(), resultState)
-	assert.Equal(t, *context, resultContext)
+	assert.Equal(t, *(context.(*baseContext)), resultContext)
 	assert.Equal(t, expectedMetric, resultMetric)
 	assert.Equal(t, expectedResource, resultResource)
 }
 
 func TestBaseContext_Performance(t *testing.T) {
 	// given
-	context := newBaseContext("Test Context", "%<value>s")
+	context := NewBaseContext("Test Context", "%<value>s")
 	metric := MustNewStringMetric("string", "Hello", "")
 	resource := NewResource()
 

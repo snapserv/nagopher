@@ -35,6 +35,12 @@ type baseContext struct {
 	format string
 }
 
+// NewBaseContext instantiates a base Context which neither holds any information nor provides any kind of logic. It is
+// meant to be used for developing custom Context types outside of nagopher.
+func NewBaseContext(name string, format string) Context {
+	return newBaseContext(name, format)
+}
+
 func newBaseContext(name string, format string) *baseContext {
 	baseContext := &baseContext{
 		name:   name,
