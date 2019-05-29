@@ -46,7 +46,7 @@ func NewStringInfoContext(name string) Context {
 
 func (c stringInfoContext) Evaluate(metric Metric, resource Resource) Result {
 	return NewResult(
-		ResultState(StateOk()),
+		ResultState(StateInfo()),
 		ResultMetric(metric), ResultContext(c), ResultResource(resource),
 	)
 }

@@ -38,7 +38,7 @@ func TestStringInfoContext_Evaluate(t *testing.T) {
 	resultContext, _ := result.Context().Get()
 
 	// then
-	assert.Equal(t, StateOk(), resultState)
+	assert.Equal(t, StateInfo(), resultState)
 	assert.Equal(t, metric, resultMetric)
 	assert.Equal(t, resource, resultResource)
 	assert.Equal(t, *stringInfoContext, resultContext)

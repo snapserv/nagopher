@@ -49,6 +49,11 @@ func StateOk() State {
 	return state{exitCode: 0, description: "ok"}
 }
 
+// StateInfo returns an "INFO" state, which is used for verbose output and otherwise behaves as StateOk()
+func StateInfo() State {
+	return state{exitCode: 0, description: "info"}
+}
+
 func (s state) ExitCode() int8 {
 	return s.exitCode
 }

@@ -86,7 +86,7 @@ func TestBaseSummarizer_Verbose(t *testing.T) {
 		NewResult(ResultState(StateWarning()), ResultHint("Reason 1")),
 		NewResult(ResultState(StateCritical()), ResultHint("Reason 2")),
 		NewResult(ResultState(StateCritical()), ResultHint("Reason 3")),
-		NewResult(ResultHint("Informational Result")),
+		NewResult(ResultState(StateInfo()), ResultHint("Informational Result")),
 	)
 
 	// then

@@ -60,7 +60,7 @@ func (s baseSummarizer) Verbose(check Check) []string {
 
 	for _, result := range check.Results().Get() {
 		state, err := result.State().Get()
-		if err != nil || state == nil {
+		if err != nil || state == StateInfo() {
 			messages = append(messages, fmt.Sprintf("info: %s", result))
 			continue
 		}
