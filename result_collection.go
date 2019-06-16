@@ -130,7 +130,7 @@ func (c *resultCollection) sort() {
 		if errA == nil && errB != nil {
 			return true
 		} else if errA == nil && errB == nil {
-			return stateA.ExitCode() > stateB.ExitCode()
+			return stateA.Priority() > stateB.Priority()
 		}
 
 		return false

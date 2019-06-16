@@ -64,6 +64,34 @@ func TestResultCollection_MostSignificantState(t *testing.T) {
 	assert.Nil(t, state2)
 }
 
+func TestResultCollection_MostSignificantState2(t *testing.T) {
+	// given
+	results := []ResultCollection{
+		NewResultCollection(), NewResultCollection(), NewResultCollection(),
+		NewResultCollection(), NewResultCollection(), NewResultCollection(),
+	}
+
+	resultInfo := NewResult(ResultState(StateInfo()))
+	resultOk := NewResult(ResultState(StateOk()))
+	resultWarning := NewResult(ResultState(StateWarning()))
+	resultCritical := NewResult(ResultState(StateCritical()))
+
+	// when
+	results[1].Add(resultInfo)
+	results[2].Add(resultInfo, resultOk)
+	results[3].Add(resultOk, resultInfo)
+	results[4].Add(resultInfo, resultOk, resultWarning)
+	results[5].Add(resultInfo, resultOk, resultWarning, resultCritical)
+
+	// then
+	assert.Nil(t, results[0].MostSignificantState().OrElse(nil))
+	assert.Equal(t, StateInfo(), results[1].MostSignificantState().OrElse(nil))
+	assert.Equal(t, StateOk(), results[2].MostSignificantState().OrElse(nil))
+	assert.Equal(t, StateOk(), results[3].MostSignificantState().OrElse(nil))
+	assert.Equal(t, StateWarning(), results[4].MostSignificantState().OrElse(nil))
+	assert.Equal(t, StateCritical(), results[5].MostSignificantState().OrElse(nil))
+}
+
 func TestResultCollection_GetMetricByName(t *testing.T) {
 	// given
 	expectedMetric1 := MustNewStringMetric("metric 1", "Hello", "")

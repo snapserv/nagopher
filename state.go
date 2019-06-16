@@ -20,38 +20,44 @@ package nagopher
 
 // State represents a Nagios plugin state, which consists of an exit code and description
 type State interface {
+	Priority() uint8
 	ExitCode() int8
 	Description() string
 }
 
 type state struct {
+	priority    uint8
 	exitCode    int8
 	description string
 }
 
 // StateUnknown returns an "UNKNOWN" state according to Nagios plugin standards
 func StateUnknown() State {
-	return state{exitCode: 3, description: "unknown"}
+	return state{priority: 4, exitCode: 3, description: "unknown"}
 }
 
 // StateCritical returns an "CRITICAL" state according to Nagios plugin standards
 func StateCritical() State {
-	return state{exitCode: 2, description: "critical"}
+	return state{priority: 3, exitCode: 2, description: "critical"}
 }
 
 // StateWarning returns an "WARNING" state according to Nagios plugin standards
 func StateWarning() State {
-	return state{exitCode: 1, description: "warning"}
+	return state{priority: 2, exitCode: 1, description: "warning"}
 }
 
 // StateOk returns an "OK" state according to Nagios plugin standards
 func StateOk() State {
-	return state{exitCode: 0, description: "ok"}
+	return state{priority: 1, exitCode: 0, description: "ok"}
 }
 
 // StateInfo returns an "INFO" state, which is used for verbose output and otherwise behaves as StateOk()
 func StateInfo() State {
-	return state{exitCode: 0, description: "info"}
+	return state{priority: 0, exitCode: 0, description: "info"}
+}
+
+func (s state) Priority() uint8 {
+	return s.priority
 }
 
 func (s state) ExitCode() int8 {
