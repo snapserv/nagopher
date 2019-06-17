@@ -47,7 +47,7 @@ type checkResult struct {
 
 var resultOutputFunction = fmt.Print
 var resultExitFunction = os.Exit
-var illegalOutputChars = []string{"|"}
+var illegalOutputChars = []string{"|", "\n"}
 
 // NewRuntime instantiates a new Runtime, optionally enabling verbose output
 func NewRuntime(verboseOutput bool) Runtime {
@@ -138,9 +138,10 @@ func (r baseRuntime) sanitizeString(value string, warnings WarningCollection) st
 	originalValue := value
 	for _, character := range illegalOutputChars {
 		value = strings.Replace(value, character, "", -1)
-		if originalValue != value && warnings != nil {
-			warnings.Add(NewWarning("nagopher: stripped illegal character from string [%s]", originalValue))
-		}
+	}
+
+	if originalValue != value && warnings != nil {
+		warnings.Add(NewWarning("nagopher: stripped illegal character from string [%s]", originalValue))
 	}
 
 	return value

@@ -29,6 +29,10 @@ type mockResource struct {
 	Resource
 }
 
+type unsanitizedMockResource struct {
+	Resource
+}
+
 type mockEmptyResource struct {
 	Resource
 }
@@ -79,6 +83,29 @@ func TestBaseRuntime_Execute(t *testing.T) {
 		"nagopher: stripped illegal character from string [usage3=83.1;10:80]",
 		"nagopher: stripped illegal character from string [warning: usage3 is 83.1 (outside range 10:80)]",
 	}, "\n")+"\n", result2.Output())
+}
+
+func TestBaseRuntime_Execute_Sanitize(t *testing.T) {
+	// given
+	check := NewCheck("what\nthe\ncheck", NewSummarizer())
+	check.AttachResources(newUnsanitizedMockResource())
+	check.AttachContexts(
+		NewScalarContext("stranger\nthings", nil, nil),
+		NewStringInfoContext("Still\nAlive"),
+	)
+
+	// when
+	result := NewRuntime(true).Execute(check)
+
+	// then
+	assert.Equal(t, strings.Join([]string{
+		"WHATTHECHECK OK - weirdthings is 49.4% | 'weirdthings'=49.4%",
+		"info: TheCakeIsALie",
+		"nagopher: stripped illegal character from string [WHATTHECHECK]",
+		"nagopher: stripped illegal character from string [weirdthings is 49.4%]",
+		"nagopher: stripped illegal character from string ['weirdthings'=49.4%]",
+		"nagopher: stripped illegal character from string [info: TheCakeIsALie]",
+	}, "\n")+"\n", result.Output())
 }
 
 func TestBaseRuntime_Execute_MissingContext(t *testing.T) {
@@ -219,6 +246,19 @@ func (r mockResource) Probe(warnings WarningCollection) ([]Metric, error) {
 		MustNewNumericMetric("usage1", 49.4, "%", nil, "usage"),
 		MustNewNumericMetric("usage2", 92.6, "%", nil, "usage"),
 		MustNewNumericMetric("usage3", 83.1, "|", nil, "usage"),
+	}, nil
+}
+
+func newUnsanitizedMockResource() Resource {
+	return &unsanitizedMockResource{
+		Resource: NewResource(),
+	}
+}
+
+func (r unsanitizedMockResource) Probe(warnings WarningCollection) ([]Metric, error) {
+	return []Metric{
+		MustNewNumericMetric("weird\nthings", 49.4, "%", nil, "stranger\nthings"),
+		MustNewStringMetric("Aperture\nScience", "The\nCakeIs\nA\nLie", "Still\nAlive"),
 	}, nil
 }
 
